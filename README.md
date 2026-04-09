@@ -1,16 +1,80 @@
-# React + Vite
+# Career Service Web App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend: React + Vite
+Backend API: Node.js + Express
+Database: PostgreSQL
 
-Currently, two official plugins are available:
+## Security Decisions
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- No secrets in frontend code.
+- All secrets loaded from environment variables.
+- Server-side payload validation with Zod.
+- Rate limiting and security headers enabled.
+- HTTPS required in production (checked via middleware).
 
-## React Compiler
+## Environment Variables
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Copy `.env.example` to `.env` and set real values:
 
-## Expanding the ESLint configuration
+```bash
+cp .env.example .env
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Required values:
+
+- `DATABASE_URL`: PostgreSQL connection string
+- `FRONTEND_ORIGIN`: allowed frontend URL for CORS
+- `PORT`: API server port
+- `NODE_ENV`: `development` or `production`
+- `PGSSL`: `true` in managed cloud DB environments
+
+## PostgreSQL Setup
+
+Create the database first:
+
+```bash
+psql -U postgres -c "CREATE DATABASE career_service;"
+```
+
+Then create tables and seed agents:
+
+```bash
+psql "$DATABASE_URL" -f server/db/init.sql
+```
+
+## Run Project
+
+Run frontend + API together:
+
+```bash
+npm run dev:full
+```
+
+Or run separately:
+
+```bash
+npm run dev:client
+npm run dev:server
+```
+
+## API Endpoints
+
+- `GET /api/health`
+- `POST /api/leads`
+
+Expected payload for `POST /api/leads`:
+
+```json
+{
+	"fullName": "Jane Doe",
+	"email": "jane@example.com",
+	"domain": "Pflege",
+	"languageLevel": "B1",
+	"source": "assistant-virtuel",
+	"recommendedAgent": "Youssef"
+}
+```
+
+## Production HTTPS
+
+Deploy behind HTTPS (Nginx/Cloudflare/Load Balancer). The API rejects non-HTTPS requests in production mode.

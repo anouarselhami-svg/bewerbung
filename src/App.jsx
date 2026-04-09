@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Briefcase,
@@ -249,7 +250,36 @@ const stats = [
 ]
 
 const promoVideoSrc = '/ad-video.mp4'
-const consultationLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Bonjour, je veux une consultation pour ma candidature en Allemagne.')}`
+const languageLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+const whatsappSupportLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Bonjour, je veux parler avec l assistant virtuel pour ma candidature en Allemagne.')}`
+const supportEmail = 'contact@germany-career-service.com'
+const aiAssistantLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Bonjour, je veux parler avec l assistant virtuel. Merci de me presenter vos services puis de m orienter vers un membre si je suis interesse.')}`
+
+const teamMembers = [
+  { name: 'Youssef', phone: '212600111111', specialties: ['Pflege', 'Altenpflege', 'IT Support'] },
+  { name: 'Sara', phone: '212600222222', specialties: ['Koch / Köchin', 'Gastronomie', 'Hotellerie'] },
+  { name: 'Hamza', phone: '212600333333', specialties: ['Mechaniker/in', 'KFZ-Technik', 'Mechatroniker/in', 'Elektriker/in'] },
+  { name: 'Meryem', phone: '212600444444', specialties: ['Lagerlogistik', 'Verkäufer/in'] },
+]
+
+const getRecommendedMember = (domain) => {
+  const directMatch = teamMembers.find((member) => member.specialties.includes(domain))
+  if (directMatch) {
+    return directMatch
+  }
+  return teamMembers[0]
+}
+
+const createRegistrationMessage = ({ name, email, domain, level }) => {
+  return [
+    'Bonjour, je veux m’inscrire au service.',
+    `Nom: ${name || 'Non renseigné'}`,
+    `Email: ${email || 'Non renseigné'}`,
+    `Domaine choisi: ${domain}`,
+    `Niveau de langue: ${level}`,
+    'Je viens de l assistant virtuel et je souhaite continuer avec un agent humain.',
+  ].join('\n')
+}
 
 const scrollToSection = (sectionId) => {
   const section = document.getElementById(sectionId)
@@ -259,6 +289,26 @@ const scrollToSection = (sectionId) => {
 }
 
 export default function App() {
+  const [candidateName, setCandidateName] = useState('')
+  const [candidateEmail, setCandidateEmail] = useState('')
+  const [selectedDomain, setSelectedDomain] = useState(branches[0].title)
+  const [selectedLevel, setSelectedLevel] = useState('B1')
+
+  const recommendedMember = useMemo(() => getRecommendedMember(selectedDomain), [selectedDomain])
+  const activeMember = recommendedMember
+
+  const consultationMessage = createRegistrationMessage({
+    name: candidateName,
+    email: candidateEmail,
+    domain: selectedDomain,
+    level: selectedLevel,
+  })
+  const emailSubject = encodeURIComponent('Nouvelle demande d inscription - Service Carriere Allemagne')
+  const emailBody = encodeURIComponent(
+    `${consultationMessage}\n\nAgent recommande: ${activeMember.name}\nNumero agent: +${activeMember.phone}`,
+  )
+  const consultationLink = `mailto:${supportEmail}?subject=${emailSubject}&body=${emailBody}`
+
   return (
     <div className="page-shell">
       <section className="hero-section">
@@ -487,15 +537,68 @@ export default function App() {
               <p className="section-kicker">Commencer</p>
               <h2>Prêt à préparer votre candidature pour l’Allemagne ?</h2>
               <p>Envoyez-nous votre profil et nous vous aiderons à préparer un parcours professionnel pour les emplois ou les opportunités d’Ausbildung.</p>
-              <div className="cta-meta"><span className="meta-item"><Phone className="icon-xs" /> Support WhatsApp / appel</span><span className="meta-item"><Mail className="icon-xs" /> Suivi par email</span></div>
+              <div className="cta-meta">
+                <a className="meta-item" href={whatsappSupportLink} target="_blank" rel="noreferrer" aria-label="Contacter le support via WhatsApp">
+                  <Phone className="icon-xs" /> Support WhatsApp / appel
+                </a>
+                <a className="meta-item" href={`mailto:${supportEmail}`} aria-label="Contacter le support par email">
+                  <Mail className="icon-xs" /> Suivi par email
+                </a>
+              </div>
+              <div className="cta-secondary-action">
+                <a className="ui-button button-outline button-md" href={aiAssistantLink} target="_blank" rel="noreferrer">
+                  Parler avec l assistant virtuel
+                </a>
+                <p className="automation-note">réponse automatisée</p>
+              </div>
             </div>
 
             <div className="cta-form">
-              <Input placeholder="Votre nom complet" />
-              <Input placeholder="Votre email" />
-              <Input placeholder="Métier ou Ausbildung visé" />
+              <Input
+                placeholder="Votre nom complet"
+                value={candidateName}
+                onChange={(event) => setCandidateName(event.target.value)}
+              />
+              <Input
+                placeholder="Votre email"
+                type="email"
+                value={candidateEmail}
+                onChange={(event) => setCandidateEmail(event.target.value)}
+              />
+
+              <select
+                className="ui-input"
+                value={selectedDomain}
+                onChange={(event) => setSelectedDomain(event.target.value)}
+                aria-label="Choisir un domaine"
+              >
+                {branches.map((branch) => (
+                  <option key={branch.title} value={branch.title}>
+                    {branch.title}
+                  </option>
+                ))}
+              </select>
+
+              <fieldset className="language-level">
+                <legend>Niveau de langue (allemand)</legend>
+                <div className="language-level-options">
+                  {languageLevels.map((level) => (
+                    <label key={level} className="language-level-chip">
+                      <input
+                        type="radio"
+                        name="language-level"
+                        value={level}
+                        checked={selectedLevel === level}
+                        onChange={(event) => setSelectedLevel(event.target.value)}
+                      />
+                      <span>{level}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
               <a className="ui-button button-default button-md cta-button" href={consultationLink} target="_blank" rel="noreferrer">
-                Demander une consultation <ArrowRight className="icon-xs ml-2" />
+                Postuler <ArrowRight className="icon-xs ml-2" />
               </a>
             </div>
           </CardContent>
