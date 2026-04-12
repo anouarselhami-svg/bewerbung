@@ -9,6 +9,7 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   FRONTEND_ORIGIN: z.string().url().default('http://localhost:5173'),
   PGSSL: z.enum(['true', 'false']).default('false'),
+  COMMENT_ADMIN_TOKEN: z.string().trim().min(8).optional(),
 })
 
 const parsed = EnvSchema.safeParse(process.env)

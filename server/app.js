@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import { env } from './config/env.js'
 import { requireHttps } from './middleware/requireHttps.js'
+import commentsRouter from './routes/comments.js'
 import leadsRouter from './routes/leads.js'
 
 const app = express()
@@ -13,7 +14,7 @@ app.use(requireHttps)
 app.use(
   cors({
     origin: env.FRONTEND_ORIGIN,
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     credentials: false,
   }),
 )
@@ -30,6 +31,6 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true })
 })
 
-app.use('/api', apiLimiter, leadsRouter)
+app.use('/api', apiLimiter, leadsRouter, commentsRouter)
 
 export default app

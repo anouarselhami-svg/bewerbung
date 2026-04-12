@@ -9,7 +9,7 @@ const LeadSchema = z.object({
   email: z.string().trim().email().max(180),
   domain: z.string().trim().min(2).max(120),
   languageLevel: z.enum(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']),
-  source: z.string().trim().max(80).default('assistant-virtuel'),
+  source: z.string().trim().max(80).default('site-web'),
   recommendedAgent: z.string().trim().max(120).optional(),
 })
 

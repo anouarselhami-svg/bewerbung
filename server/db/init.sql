@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS leads (
   email VARCHAR(180) NOT NULL,
   domain VARCHAR(120) NOT NULL,
   language_level VARCHAR(2) NOT NULL CHECK (language_level IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')),
-  source VARCHAR(80) NOT NULL DEFAULT 'assistant-virtuel',
+  source VARCHAR(80) NOT NULL DEFAULT 'site-web',
   recommended_agent VARCHAR(120),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -25,17 +25,25 @@ CREATE TABLE IF NOT EXISTS lead_assignments (
   id BIGSERIAL PRIMARY KEY,
   lead_id BIGINT NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
   agent_id BIGINT NOT NULL REFERENCES agents(id) ON DELETE RESTRICT,
-  assignment_reason VARCHAR(140) NOT NULL DEFAULT 'assistant-virtuel-routing',
+  assignment_reason VARCHAR(140) NOT NULL DEFAULT 'routing-manuel',
   assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_lead_assignments_lead_id ON lead_assignments (lead_id);
 CREATE INDEX IF NOT EXISTS idx_lead_assignments_agent_id ON lead_assignments (agent_id);
 
+CREATE TABLE IF NOT EXISTS comments (
+  id BIGSERIAL PRIMARY KEY,
+  author_name VARCHAR(80) NOT NULL,
+  message VARCHAR(800) NOT NULL,
+  rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments (created_at DESC);
+
 INSERT INTO agents (full_name, phone, specialties)
 VALUES
-  ('Youssef', '212600111111', 'Pflege,Altenpflege,IT Support'),
-  ('Sara', '212600222222', 'Koch / Köchin,Gastronomie,Hotellerie'),
-  ('Hamza', '212600333333', 'Mechaniker/in,KFZ-Technik,Mechatroniker/in,Elektriker/in'),
-  ('Meryem', '212600444444', 'Lagerlogistik,Verkäufer/in')
+  ('Contact 1', '212664879503', 'Pflege,Altenpflege,IT Support,Koch / Köchin,Gastronomie,Hotellerie,Mechaniker/in,Mechatroniker/in,Elektriker/in,Lagerlogistik,Verkäufer/in,KFZ-Technik'),
+  ('Contact 2', '212602910235', 'Pflege,Altenpflege,IT Support,Koch / Köchin,Gastronomie,Hotellerie,Mechaniker/in,Mechatroniker/in,Elektriker/in,Lagerlogistik,Verkäufer/in,KFZ-Technik')
 ON CONFLICT (phone) DO NOTHING;

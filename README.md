@@ -27,6 +27,7 @@ Required values:
 - `PORT`: API server port
 - `NODE_ENV`: `development` or `production`
 - `PGSSL`: `true` in managed cloud DB environments
+- `COMMENT_ADMIN_TOKEN`: required token to authorize `DELETE /api/comments/:id`
 
 ## PostgreSQL Setup
 
@@ -61,6 +62,13 @@ npm run dev:server
 
 - `GET /api/health`
 - `POST /api/leads`
+- `GET /api/comments`
+- `POST /api/comments`
+- `DELETE /api/comments/:id`
+
+For `DELETE /api/comments/:id`, send header:
+
+- `x-admin-token: <COMMENT_ADMIN_TOKEN>`
 
 Expected payload for `POST /api/leads`:
 
@@ -70,8 +78,8 @@ Expected payload for `POST /api/leads`:
 	"email": "jane@example.com",
 	"domain": "Pflege",
 	"languageLevel": "B1",
-	"source": "assistant-virtuel",
-	"recommendedAgent": "Youssef"
+	"source": "site-web",
+	"recommendedAgent": "Contact 1"
 }
 ```
 

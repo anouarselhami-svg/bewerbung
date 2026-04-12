@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Briefcase,
-  GraduationCap,
   FileText,
   Mail,
   CheckCircle2,
@@ -26,7 +25,6 @@ import {
   ShoppingBag,
   Utensils,
 } from 'lucide-react'
-import heroPoster from './assets/hero.png'
 import { Card, CardContent } from './components/ui/card'
 import { Button } from './components/ui/button'
 import { Input } from './components/ui/input'
@@ -34,15 +32,21 @@ import './App.css'
 
 const Animated = motion
 
-const WHATSAPP_NUMBER = '212600000000'
+const WHATSAPP_RECIPIENTS = ['212602910235', '212664879503']
+const WHATSAPP_ROUTING_KEY = 'whatsapp-routing-index'
+const COMMENT_BLOCKED_WORDS = ['insulte', 'arnaque', 'escroc', 'haine']
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
-const buildBranchDetails = ({ duration, city, salary, documents, visa, deadline }) => [
+const formatWhatsAppNumber = (phoneNumber) => `+${phoneNumber.slice(0, 3)} ${phoneNumber.slice(3, 6)} ${phoneNumber.slice(6, 9)} ${phoneNumber.slice(9)}`
+
+const whatsappNumbersFormatted = WHATSAPP_RECIPIENTS.map(formatWhatsAppNumber).join(' / ')
+
+const buildBranchDetails = ({ duration, city, salary, documents, deadline }) => [
   'Niveau requis: B1-B2',
   `Durée: ${duration}`,
   `Ville/Région: ${city}`,
   `Salaire moyen: ${salary}`,
   `Documents nécessaires: ${documents}`,
-  `Statut visa: ${visa}`,
   `Date limite pour postuler: ${deadline}`,
 ]
 
@@ -56,7 +60,6 @@ const branches = [
       city: 'Berlin / Hamburg',
       salary: '2400-3200 EUR',
       documents: 'CV, passeport, diplôme',
-      visa: 'Contrat + dossier complet',
       deadline: '30/09/2026',
     }),
   },
@@ -69,7 +72,6 @@ const branches = [
       city: 'Munich / Cologne',
       salary: '2100-2900 EUR',
       documents: 'CV, lettre de motivation, certificats',
-      visa: 'Contrat employeur',
       deadline: '15/10/2026',
     }),
   },
@@ -82,7 +84,6 @@ const branches = [
       city: 'Stuttgart / Dortmund',
       salary: '2500-3400 EUR',
       documents: 'CV, attestations techniques',
-      visa: 'Qualification reconnue',
       deadline: '10/10/2026',
     }),
   },
@@ -95,7 +96,6 @@ const branches = [
       city: 'Bremen / Hanover',
       salary: '2600-3600 EUR',
       documents: 'CV, diplôme, expérience',
-      visa: 'Contrat + assurance',
       deadline: '01/11/2026',
     }),
   },
@@ -108,7 +108,6 @@ const branches = [
       city: 'Frankfurt / Leipzig',
       salary: '2400-3300 EUR',
       documents: 'CV, certificats professionnels',
-      visa: 'Équivalence utile',
       deadline: '20/10/2026',
     }),
   },
@@ -121,7 +120,6 @@ const branches = [
       city: 'Duisburg / Nuremberg',
       salary: '2100-2800 EUR',
       documents: 'CV, pièce d’identité',
-      visa: 'Offre + logement conseillé',
       deadline: '05/11/2026',
     }),
   },
@@ -134,7 +132,6 @@ const branches = [
       city: 'Berlin / Essen',
       salary: '2000-2700 EUR',
       documents: 'CV, lettre de motivation',
-      visa: 'Contrat de travail requis',
       deadline: '12/10/2026',
     }),
   },
@@ -147,7 +144,6 @@ const branches = [
       city: 'Hamburg / Berlin',
       salary: '2100-2900 EUR',
       documents: 'CV, références',
-      visa: 'Contrat + hébergement',
       deadline: '25/10/2026',
     }),
   },
@@ -160,7 +156,6 @@ const branches = [
       city: 'Cologne / Bonn',
       salary: '2000-2800 EUR',
       documents: 'CV, disponibilité',
-      visa: 'Contrat employeur',
       deadline: '08/11/2026',
     }),
   },
@@ -173,7 +168,6 @@ const branches = [
       city: 'Dresden / Hanover',
       salary: '2500-3400 EUR',
       documents: 'CV, diplôme, casier',
-      visa: 'Dossier santé complet',
       deadline: '30/10/2026',
     }),
   },
@@ -186,7 +180,6 @@ const branches = [
       city: 'Stuttgart / Wolfsburg',
       salary: '2500-3500 EUR',
       documents: 'CV, attestation atelier',
-      visa: 'Contrat + qualification',
       deadline: '14/11/2026',
     }),
   },
@@ -199,47 +192,78 @@ const branches = [
       city: 'Berlin / Munich',
       salary: '2800-3800 EUR',
       documents: 'CV, projets, certificats',
-      visa: 'Contrat tech',
       deadline: '22/11/2026',
     }),
   },
 ]
 
+const getNextWhatsAppRecipient = () => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return WHATSAPP_RECIPIENTS[0]
+  }
+
+  const storedIndex = Number.parseInt(window.localStorage.getItem(WHATSAPP_ROUTING_KEY) ?? '0', 10)
+  const safeIndex = Number.isNaN(storedIndex) ? 0 : storedIndex
+
+  return WHATSAPP_RECIPIENTS[safeIndex % WHATSAPP_RECIPIENTS.length]
+}
+
+const advanceWhatsAppRecipient = () => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return
+  }
+
+  const storedIndex = Number.parseInt(window.localStorage.getItem(WHATSAPP_ROUTING_KEY) ?? '0', 10)
+  const safeIndex = Number.isNaN(storedIndex) ? 0 : storedIndex
+  const nextIndex = (safeIndex + 1) % WHATSAPP_RECIPIENTS.length
+
+  window.localStorage.setItem(WHATSAPP_ROUTING_KEY, String(nextIndex))
+}
+
+const buildWhatsAppLink = (phoneNumber, text) => `https://wa.me/${phoneNumber}?text=${encodeURIComponent(text)}`
+
+const openRotatingWhatsAppLink = (text) => {
+  const recipient = getNextWhatsAppRecipient()
+  const link = buildWhatsAppLink(recipient, text)
+
+  advanceWhatsAppRecipient()
+  window.open(link, '_blank', 'noopener,noreferrer')
+}
+
 const createWhatsAppLink = (branchTitle) => {
   const text = `Bonjour, je veux plus d'informations sur la filière ${branchTitle} en Allemagne.`
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`
+  return buildWhatsAppLink(getNextWhatsAppRecipient(), text)
 }
 
 const services = [
-  { icon: FileText, title: 'Lebenslauf / CV', description: "Des CV modernes et professionnels au format allemand, adaptés aux emplois, à l'Ausbildung, aux stages et aux apprentissages." },
-  { icon: FileText, title: 'Bewerbung complète', description: "Nous préparons tout votre dossier de candidature : Anschreiben, Lebenslauf, optimisation du profil et organisation des documents utiles." },
-  { icon: Search, title: "Recherche d'emploi et d'Ausbildung", description: "Nous recherchons des offres pertinentes en Allemagne selon votre profil, votre niveau de langue, votre expérience et la ville visée." },
-  { icon: Mail, title: "Gestion des contacts d'entreprises", description: "Nous organisons les emails RH officiels, les contacts carrière et les canaux de candidature pour garder une démarche sérieuse et structurée." },
-  { icon: Globe, title: 'Accompagnement pour le marché allemand', description: "Nous vous aidons à comprendre le processus de candidature en Allemagne, les attentes, les documents nécessaires et les erreurs à éviter." },
-  { icon: ShieldCheck, title: 'Suivi des candidatures', description: 'Nous vous aidons à suivre les candidatures envoyées, les réponses, les demandes d’entretien et les prochaines étapes.' },
+  { icon: Search, title: "Collecte d'emails d'entreprises", description: 'Nous trouvons les emails RH utiles selon votre profil.' },
+  { icon: Mail, title: 'Envoi des contacts aux clients', description: 'Nous vous envoyons une liste claire d’emails d’entreprises.' },
+  { icon: FileText, title: 'Traduction des dossiers', description: 'Nous traduisons CV, lettres et documents essentiels.' },
+  { icon: Globe, title: 'Informations et consultations', description: 'Nous donnons des infos pratiques et des consultations rapides.' },
+  { icon: ShieldCheck, title: 'Conseils de candidature', description: 'Nous vous guidons pour mieux contacter les entreprises.' },
 ]
 
 const steps = [
-  { number: '01', title: 'Analyse du profil', text: "Nous analysons votre parcours scolaire, votre expérience, votre niveau de langue et vos objectifs professionnels." },
-  { number: '02', title: 'Préparation des documents', text: "Nous créons ou améliorons votre Lebenslauf et votre Bewerbung complète dans un format solide et adapté à l'Allemagne." },
-  { number: '03', title: "Recherche d'offres", text: "Nous trouvons des emplois ou des Ausbildung adaptés et nous organisons les contacts utiles des entreprises." },
-  { number: '04', title: 'Accompagnement à la candidature', text: "Nous vous aidons pour l'envoi, la structure des emails, le suivi et la préparation aux entretiens." },
+  { number: '01', title: 'Analyse du besoin', text: 'On définit votre profil et votre cible.' },
+  { number: '02', title: 'Collecte des emails', text: 'On prépare les contacts RH utiles.' },
+  { number: '03', title: 'Traduction du dossier', text: 'On traduit les documents importants.' },
+  { number: '04', title: 'Consultation et orientation', text: 'On vous guide pour les prochaines étapes.' },
 ]
 
 const highlights = [
-  'Pour les chercheurs d’emploi et les candidats en Ausbildung',
-  'Documents de candidature professionnels au format allemand',
-  'Recherche ciblée selon votre profil',
-  "Organisation des contacts d'entreprises et du suivi",
-  'Processus clair et simple pour les débutants',
-  'Accompagnement à distance du début jusqu’à la candidature',
+  'Emails d’entreprises ciblés',
+  'Contacts envoyés rapidement',
+  'Traduction des dossiers de candidature',
+  'Infos pratiques utiles',
+  'Consultations personnalisées',
+  'Accompagnement simple',
 ]
 
 const faq = [
-  { q: 'À qui s’adresse ce service ?', a: "Ce service s'adresse à toute personne qui veut postuler à un emploi ou à une Ausbildung en Allemagne, surtout les débutants qui ont besoin d'aide pour les documents et le processus." },
-  { q: 'Est-ce que vous préparez toute la Bewerbung ?', a: 'Oui. Nous pouvons vous aider à préparer toute la Bewerbung, y compris le Lebenslauf, la lettre de motivation et l’organisation des informations importantes.' },
-  { q: 'Est-ce que vous cherchez les opportunités pour moi ?', a: 'Oui. Nous identifions des opportunités adaptées et nous vous aidons à organiser les contacts carrière et les canaux de candidature des entreprises.' },
-  { q: 'Pouvez-vous m’aider même si mon allemand n’est pas parfait ?', a: 'Oui. Nous adaptons vos documents à votre niveau actuel et nous vous guidons sur ce qui est réaliste pour votre profil.' },
+  { q: 'À qui s’adresse ce service ?', a: 'À toute personne qui veut candidater en Allemagne.' },
+  { q: 'Est-ce que vous gérez le visa ?', a: 'Non, nous ne gérons pas le visa.' },
+  { q: 'Vous faites quoi exactement ?', a: 'Emails d’entreprises, traduction de dossier, infos et consultations.' },
+  { q: 'Vous aidez si mon allemand est faible ?', a: 'Oui, nous adaptons les documents à votre niveau.' },
 ]
 
 const stats = [
@@ -249,25 +273,40 @@ const stats = [
   { value: 'Emails', label: 'Organisation des contacts RH' },
 ]
 
-const promoVideoSrc = '/ad-video.mp4'
+const servicesPlaceholderImage = '/services-placeholder.svg'
+const sitePublicUrl = 'https://service-for-deutschland.netlify.app/'
+const siteQrImage = '/qr-service-for-deutschland.png'
 const languageLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
-const whatsappSupportLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Bonjour, je veux parler avec l assistant virtuel pour ma candidature en Allemagne.')}`
-const supportEmail = 'contact@germany-career-service.com'
-const aiAssistantLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Bonjour, je veux parler avec l assistant virtuel. Merci de me presenter vos services puis de m orienter vers un membre si je suis interesse.')}`
+const supportEmail = 'baloua96@hotmail.fr'
 
 const teamMembers = [
-  { name: 'Youssef', phone: '212600111111', specialties: ['Pflege', 'Altenpflege', 'IT Support'] },
-  { name: 'Sara', phone: '212600222222', specialties: ['Koch / Köchin', 'Gastronomie', 'Hotellerie'] },
-  { name: 'Hamza', phone: '212600333333', specialties: ['Mechaniker/in', 'KFZ-Technik', 'Mechatroniker/in', 'Elektriker/in'] },
-  { name: 'Meryem', phone: '212600444444', specialties: ['Lagerlogistik', 'Verkäufer/in'] },
+  { name: 'Contact 1', phone: '212664879503', specialties: ['Pflege', 'Altenpflege', 'IT Support', 'Koch / Köchin', 'Gastronomie', 'Hotellerie'] },
+  { name: 'Contact 2', phone: '212602910235', specialties: ['Pflege', 'Altenpflege', 'IT Support', 'Koch / Köchin', 'Gastronomie', 'Hotellerie'] },
 ]
 
-const getRecommendedMember = (domain) => {
-  const directMatch = teamMembers.find((member) => member.specialties.includes(domain))
-  if (directMatch) {
-    return directMatch
+const applicationRoutingKey = 'application-routing-index'
+
+const getNextApplicationMember = () => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return teamMembers[0]
   }
-  return teamMembers[0]
+
+  const storedIndex = Number.parseInt(window.localStorage.getItem(applicationRoutingKey) ?? '0', 10)
+  const safeIndex = Number.isNaN(storedIndex) ? 0 : storedIndex
+
+  return teamMembers[safeIndex % teamMembers.length]
+}
+
+const advanceApplicationMember = () => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return
+  }
+
+  const storedIndex = Number.parseInt(window.localStorage.getItem(applicationRoutingKey) ?? '0', 10)
+  const safeIndex = Number.isNaN(storedIndex) ? 0 : storedIndex
+  const nextIndex = (safeIndex + 1) % teamMembers.length
+
+  window.localStorage.setItem(applicationRoutingKey, String(nextIndex))
 }
 
 const createRegistrationMessage = ({ name, email, domain, level }) => {
@@ -277,7 +316,7 @@ const createRegistrationMessage = ({ name, email, domain, level }) => {
     `Email: ${email || 'Non renseigné'}`,
     `Domaine choisi: ${domain}`,
     `Niveau de langue: ${level}`,
-    'Je viens de l assistant virtuel et je souhaite continuer avec un agent humain.',
+    'Je souhaite continuer avec un conseiller.',
   ].join('\n')
 }
 
@@ -293,9 +332,43 @@ export default function App() {
   const [candidateEmail, setCandidateEmail] = useState('')
   const [selectedDomain, setSelectedDomain] = useState(branches[0].title)
   const [selectedLevel, setSelectedLevel] = useState('B1')
+  const [commentName, setCommentName] = useState('')
+  const [commentMessage, setCommentMessage] = useState('')
+  const [commentRating, setCommentRating] = useState(5)
+  const [commentError, setCommentError] = useState('')
+  const [commentAdminToken, setCommentAdminToken] = useState('')
+  const [comments, setComments] = useState([])
+  const [commentsLoading, setCommentsLoading] = useState(true)
+  const [commentsRequestError, setCommentsRequestError] = useState('')
 
-  const recommendedMember = useMemo(() => getRecommendedMember(selectedDomain), [selectedDomain])
-  const activeMember = recommendedMember
+  useEffect(() => {
+    const loadComments = async () => {
+      setCommentsLoading(true)
+      setCommentsRequestError('')
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/comments?limit=20`)
+        if (!response.ok) {
+          throw new Error('Impossible de charger les commentaires')
+        }
+
+        const payload = await response.json()
+        const nextComments = Array.isArray(payload.comments) ? payload.comments : []
+        setComments(nextComments.map((comment) => ({ ...comment, rating: Number(comment.rating) || 5 })))
+      } catch {
+        setCommentsRequestError('Impossible de charger les commentaires pour le moment.')
+      } finally {
+        setCommentsLoading(false)
+      }
+    }
+
+    loadComments()
+  }, [])
+
+  const containsBlockedWord = (text) => {
+    const normalized = text.toLowerCase()
+    return COMMENT_BLOCKED_WORDS.some((word) => normalized.includes(word))
+  }
 
   const consultationMessage = createRegistrationMessage({
     name: candidateName,
@@ -303,11 +376,97 @@ export default function App() {
     domain: selectedDomain,
     level: selectedLevel,
   })
-  const emailSubject = encodeURIComponent('Nouvelle demande d inscription - Service Carriere Allemagne')
-  const emailBody = encodeURIComponent(
-    `${consultationMessage}\n\nAgent recommande: ${activeMember.name}\nNumero agent: +${activeMember.phone}`,
-  )
-  const consultationLink = `mailto:${supportEmail}?subject=${emailSubject}&body=${emailBody}`
+
+  const handleApplyWhatsApp = () => {
+    const activeMember = getNextApplicationMember()
+    const applicationLink = `https://wa.me/${activeMember.phone}?text=${encodeURIComponent(
+      `${consultationMessage}\n\nCanal choisi: WhatsApp\nConseiller assigne: ${activeMember.name} (+${activeMember.phone})\nMerci de me contacter pour finaliser ma candidature.`,
+    )}`
+
+    advanceApplicationMember()
+    window.open(applicationLink, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleApplyEmail = () => {
+    const activeMember = getNextApplicationMember()
+    const emailSubject = encodeURIComponent('Nouvelle candidature - Service Carriere Allemagne')
+    const emailBody = encodeURIComponent(
+      `${consultationMessage}\n\nCanal choisi: Email\nConseiller assigne: ${activeMember.name} (+${activeMember.phone})`,
+    )
+    const emailLink = `mailto:${supportEmail}?subject=${emailSubject}&body=${emailBody}`
+
+    advanceApplicationMember()
+    window.location.href = emailLink
+  }
+
+  const handleSendComment = async () => {
+    setCommentError('')
+    const trimmedMessage = commentMessage.trim()
+    if (!trimmedMessage) {
+      setCommentError('Veuillez ecrire un commentaire.')
+      return
+    }
+
+    if (containsBlockedWord(trimmedMessage)) {
+      setCommentError('Commentaire refuse: un mot non autorise a ete detecte.')
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: commentName.trim() || 'Anonyme',
+          message: trimmedMessage,
+          rating: commentRating,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Publication echouee')
+      }
+
+      const payload = await response.json()
+      const createdComment = payload.comment
+      if (!createdComment) {
+        throw new Error('Commentaire invalide')
+      }
+
+      setComments((previousComments) => [createdComment, ...previousComments].slice(0, 20))
+      setCommentName('')
+      setCommentMessage('')
+      setCommentRating(5)
+    } catch {
+      setCommentError('Impossible de publier le commentaire pour le moment.')
+    }
+  }
+
+  const handleDeleteComment = async (commentId) => {
+    if (!commentAdminToken.trim()) {
+      setCommentError('Token admin requis pour supprimer un commentaire.')
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+          'x-admin-token': commentAdminToken.trim(),
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Suppression echouee')
+      }
+
+      setComments((previousComments) => previousComments.filter((comment) => comment.id !== commentId))
+    } catch {
+      setCommentError('Impossible de supprimer ce commentaire pour le moment.')
+    }
+  }
 
   return (
     <div className="page-shell">
@@ -332,7 +491,7 @@ export default function App() {
 
             <h1>Construisez votre chemin vers un <span>emploi</span> ou une <span className="blue">Ausbildung</span> en Allemagne.</h1>
 
-            <p className="hero-text">Nous vous aidons avec votre <strong>Lebenslauf</strong>, votre <strong>Bewerbung complète</strong>, la recherche ciblée d’opportunités et une organisation claire des contacts officiels des entreprises et des RH.</p>
+            <p className="hero-text">Nous collectons des emails d’entreprises, traduisons vos dossiers et vous conseillons pour candidater plus vite.</p>
 
             <div className="hero-actions">
               <Button
@@ -367,50 +526,19 @@ export default function App() {
                 <Card key={stat.label} className="glass-card stat-card"><CardContent className="card-content"><p className="stat-value">{stat.value}</p><p className="stat-label">{stat.label}</p></CardContent></Card>
               ))}
             </div>
-
-            <Card className="glass-card spotlight-card">
-              <CardContent className="card-content">
-                <div className="section-heading">
-                  <div className="badge-icon"><GraduationCap className="icon-sm blue-text" /></div>
-                  <div>
-                    <h3>Ce que nous pouvons faire pour vous</h3>
-                    <p>Un service simple et complet pour candidater en Allemagne</p>
-                  </div>
-                </div>
-                <div className="check-list">
-                  {['Préparation du Lebenslauf', 'Rédaction et structuration de la Bewerbung', 'Recherche d’opportunités adaptées', "Organisation des contacts officiels d'entreprises", 'Suivi et accompagnement'].map((line) => (
-                    <div key={line} className="check-row"><CheckCircle2 className="icon-xs success" /><span>{line}</span></div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </Animated.div>
         </div>
       </section>
 
       <section className="content-section video-section" id="video">
         <div className="section-intro narrow">
-          <p className="section-kicker">Vidéo promotionnelle</p>
-          <h2>Une vidéo pour présenter notre service</h2>
-          <p>
-            Ajoutez ici votre vraie vidéo de présentation. Le bouton visible dans la vidéo dirige
-            les visiteurs vers la page des services afin qu’ils puissent découvrir ce que nous
-            proposons.
-          </p>
+          <p className="section-kicker">Aperçu des services</p>
+          <h2>Image temporaire en attendant la vidéo</h2>
+          <p>Voici un visuel de nos services. La vidéo sera ajoutée dès qu’elle est prête.</p>
         </div>
 
         <div className="video-frame">
-          <video
-            className="promo-video"
-            controls
-            playsInline
-            muted
-            loop
-            autoPlay
-            poster={heroPoster}
-          >
-            <source src={promoVideoSrc} type="video/mp4" />
-          </video>
+          <img className="promo-video" src={servicesPlaceholderImage} alt="Visuel temporaire présentant nos services" loading="lazy" />
 
           <div className="video-overlay">
             <div className="video-badge">
@@ -419,11 +547,8 @@ export default function App() {
             </div>
 
             <div className="video-overlay-copy">
-              <h3>Regardez la vidéo et découvrez comment nous aidons les candidats</h3>
-              <p>
-                Le lien ci-dessous peut être placé aussi dans la description de la vidéo ou dans
-                le bouton à l’écran pour renvoyer les intéressés vers le site.
-              </p>
+              <h3>Nos services clés en un coup d’oeil</h3>
+              <p>Collecte d’emails, traduction des dossiers et accompagnement candidature.</p>
             </div>
 
             <a className="ui-button button-default button-md video-cta" href="#services-list">
@@ -437,14 +562,28 @@ export default function App() {
         <div className="section-intro">
           <p className="section-kicker">Choisissez une filière</p>
           <h2>Cliquez sur une branche et posez-nous vos questions directement sur WhatsApp</h2>
-          <p>Nous vous accompagnons pour les métiers et formations les plus recherchés en Allemagne. Dès qu’un visiteur clique sur une filière, il est redirigé vers WhatsApp avec un message prêt à envoyer.</p>
+          <p>Choisissez une filière et posez vos questions directement sur WhatsApp.</p>
         </div>
 
         <div className="branch-grid">
           {branches.map((branch, index) => {
             const Icon = branch.icon
             return (
-              <Animated.a key={branch.title} href={createWhatsAppLink(branch.title)} target="_blank" rel="noreferrer" initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: index * 0.04 }} className="branch-link">
+              <Animated.a
+                key={branch.title}
+                href={createWhatsAppLink(branch.title)}
+                target="_blank"
+                rel="noreferrer"
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.04 }}
+                className="branch-link"
+                onClick={(event) => {
+                  event.preventDefault()
+                  openRotatingWhatsAppLink(`Bonjour, je veux plus d'informations sur la filière ${branch.title} en Allemagne.`)
+                }}
+              >
                 <Card className="glass-card branch-card">
                   <CardContent className="card-content">
                     <div className="branch-icon-wrap"><Icon className="icon-md success-text" /></div>
@@ -470,8 +609,8 @@ export default function App() {
       <section className="content-section">
         <div className="section-intro narrow">
           <p className="section-kicker">Nos services</p>
-          <h2>Tout ce qu’il faut pour postuler avec confiance</h2>
-          <p>Un service complet pour les candidats qui veulent construire un dossier solide pour le marché allemand.</p>
+          <h2>Nos services essentiels</h2>
+          <p>Tout le nécessaire pour candidater simplement.</p>
         </div>
 
         <div className="service-grid">
@@ -496,8 +635,8 @@ export default function App() {
         <div className="split-wrap">
           <div className="split-copy">
             <p className="section-kicker blue-kicker">Comment ça marche</p>
-            <h2>Un processus simple étape par étape</h2>
-            <p>Nous gardons le processus clair et bien organisé, surtout pour les personnes qui postulent pour la première fois.</p>
+            <h2>Processus simple en 4 étapes</h2>
+            <p>Clair, rapide et pratique.</p>
 
             <div className="step-list">
               {steps.map((step) => (
@@ -519,8 +658,8 @@ export default function App() {
       <section className="content-section faq-section">
         <div className="section-intro narrow">
           <p className="section-kicker">FAQ</p>
-          <h2>Questions les plus fréquentes</h2>
-          <p>Des réponses claires pour les candidats qui veulent comprendre le service avant de commencer.</p>
+          <h2>Questions fréquentes</h2>
+          <p>Réponses courtes et directes.</p>
         </div>
 
         <div className="faq-list">
@@ -530,26 +669,107 @@ export default function App() {
         </div>
       </section>
 
+      <section className="content-section comment-section">
+        <div className="section-intro narrow">
+          <p className="section-kicker">Commentaires</p>
+          <h2>Laissez un avis ou une question</h2>
+          <p>Les commentaires sont enregistres en base de donnees securisee.</p>
+        </div>
+
+        <Card className="glass-card comment-card">
+          <CardContent className="card-content comment-content">
+            <Input
+              placeholder="Token admin (suppression)"
+              type="password"
+              value={commentAdminToken}
+              onChange={(event) => setCommentAdminToken(event.target.value)}
+            />
+            <Input
+              placeholder="Votre nom"
+              value={commentName}
+              onChange={(event) => setCommentName(event.target.value)}
+            />
+            <textarea
+              className="ui-input comment-textarea"
+              placeholder="Votre commentaire"
+              value={commentMessage}
+              onChange={(event) => setCommentMessage(event.target.value)}
+            />
+            <div className="comment-rating-input" aria-label="Donner une note">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  className={`star-btn ${commentRating >= star ? 'is-active' : ''}`}
+                  onClick={() => setCommentRating(star)}
+                  aria-label={`Donner ${star} etoile${star > 1 ? 's' : ''}`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            {commentError && <p className="comment-error">{commentError}</p>}
+            <Button className="cta-button" type="button" onClick={handleSendComment}>
+              Publier le commentaire <ArrowRight className="icon-xs ml-2" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        {commentsLoading && <p className="comment-state-text">Chargement des commentaires...</p>}
+        {commentsRequestError && <p className="comment-error">{commentsRequestError}</p>}
+        {!commentsLoading && !commentsRequestError && comments.length === 0 && (
+          <p className="comment-state-text">Aucun commentaire pour le moment.</p>
+        )}
+
+        {comments.length > 0 && (
+          <div className="comment-list">
+            {comments.map((comment) => (
+              <Card key={comment.id} className="glass-card comment-item">
+                <CardContent className="card-content">
+                  <div className="comment-item-head">
+                    <strong>{comment.name}</strong>
+                    <span>{new Date(comment.createdAt).toLocaleDateString('fr-FR')}</span>
+                  </div>
+                  <div className="comment-rating-view" aria-label={`Note: ${comment.rating} sur 5`}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span key={star} className={comment.rating >= star ? 'is-active' : ''}>★</span>
+                    ))}
+                  </div>
+                  <p>{comment.message}</p>
+                  <button className="comment-delete-btn" type="button" onClick={() => handleDeleteComment(comment.id)}>
+                    Supprimer
+                  </button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
+
       <section className="content-section cta-section" id="contact">
         <Card className="glass-card cta-card">
           <CardContent className="cta-content card-content">
             <div>
               <p className="section-kicker">Commencer</p>
-              <h2>Prêt à préparer votre candidature pour l’Allemagne ?</h2>
-              <p>Envoyez-nous votre profil et nous vous aiderons à préparer un parcours professionnel pour les emplois ou les opportunités d’Ausbildung.</p>
+              <h2>Prêt à commencer ?</h2>
+              <p>Envoyez votre profil, on vous répond rapidement.</p>
               <div className="cta-meta">
-                <a className="meta-item" href={whatsappSupportLink} target="_blank" rel="noreferrer" aria-label="Contacter le support via WhatsApp">
-                  <Phone className="icon-xs" /> Support WhatsApp / appel
+                <a
+                  className="meta-item"
+                  href={buildWhatsAppLink(getNextWhatsAppRecipient(), 'Bonjour, je veux des informations pour ma candidature en Allemagne.')}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Contacter le support via WhatsApp"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    openRotatingWhatsAppLink('Bonjour, je veux des informations pour ma candidature en Allemagne.')
+                  }}
+                >
+                  <Phone className="icon-xs" /> WhatsApp: {whatsappNumbersFormatted}
                 </a>
                 <a className="meta-item" href={`mailto:${supportEmail}`} aria-label="Contacter le support par email">
                   <Mail className="icon-xs" /> Suivi par email
                 </a>
-              </div>
-              <div className="cta-secondary-action">
-                <a className="ui-button button-outline button-md" href={aiAssistantLink} target="_blank" rel="noreferrer">
-                  Parler avec l assistant virtuel
-                </a>
-                <p className="automation-note">réponse automatisée</p>
               </div>
             </div>
 
@@ -597,13 +817,84 @@ export default function App() {
                 </div>
               </fieldset>
 
-              <a className="ui-button button-default button-md cta-button" href={consultationLink} target="_blank" rel="noreferrer">
-                Postuler <ArrowRight className="icon-xs ml-2" />
-              </a>
+              <p className="cta-choice-label">Choisissez votre mode de candidature</p>
+              <div className="cta-choice-buttons">
+                <Button className="cta-button" type="button" onClick={handleApplyWhatsApp}>
+                  Postuler via WhatsApp <Phone className="icon-xs ml-2" />
+                </Button>
+                <Button className="cta-button" type="button" variant="outline" onClick={handleApplyEmail}>
+                  Postuler par email <Mail className="icon-xs ml-2" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
       </section>
+
+      <section className="content-section footer-contact-section" id="contacts-footer">
+        <div className="section-intro narrow">
+          <p className="section-kicker">Contacts</p>
+          <h2>Contacts directs + QR Code du site</h2>
+          <p>Scannez le QR code pour ouvrir le site, ou contactez directement notre equipe.</p>
+        </div>
+
+        <div className="footer-contact-grid">
+          <Card className="glass-card contact-list-card">
+            <CardContent className="card-content contact-list-content">
+              {teamMembers.map((member) => (
+                <div key={member.phone} className="contact-person-card">
+                  <h3>{member.name}</h3>
+                  <p>WhatsApp: {formatWhatsAppNumber(member.phone)}</p>
+                  <a
+                    className="ui-button button-outline button-md"
+                    href={buildWhatsAppLink(member.phone, 'Bonjour, je veux des informations pour ma candidature en Allemagne.')}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Phone className="icon-xs" /> Ouvrir WhatsApp
+                  </a>
+                </div>
+              ))}
+
+              <div className="contact-person-card">
+                <h3>Email Support</h3>
+                <p>{supportEmail}</p>
+                <a className="ui-button button-outline button-md" href={`mailto:${supportEmail}`}>
+                  <Mail className="icon-xs" /> Envoyer un email
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card qr-card">
+            <CardContent className="card-content qr-content">
+              <h3>QR Code du site</h3>
+              <p>Scannez ce code avec votre telephone pour ouvrir la page.</p>
+              <img className="qr-image" src={siteQrImage} alt="QR code vers Service for Deutschland" loading="lazy" />
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <a
+        className="mobile-whatsapp-fab"
+        href={buildWhatsAppLink(getNextWhatsAppRecipient(), 'Bonjour, je veux des informations pour ma candidature en Allemagne.')}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Contacter sur WhatsApp"
+        onClick={(event) => {
+          event.preventDefault()
+          openRotatingWhatsAppLink('Bonjour, je veux des informations pour ma candidature en Allemagne.')
+        }}
+      >
+        <Phone className="icon-sm" />
+        WhatsApp
+      </a>
+
+      <a className="mobile-email-fab" href={`mailto:${supportEmail}`} aria-label="Contacter par email">
+        <Mail className="icon-sm" />
+        Email
+      </a>
     </div>
   )
 }
