@@ -28,6 +28,7 @@ Required values:
 - `NODE_ENV`: `development` or `production`
 - `PGSSL`: `true` in managed cloud DB environments
 - `COMMENT_ADMIN_TOKEN`: required token to authorize `DELETE /api/comments/:id`
+- `ADMIN_DASHBOARD_TOKEN`: token to protect `/api/admin/*` endpoints (if omitted, fallback is `COMMENT_ADMIN_TOKEN`)
 
 ## PostgreSQL Setup
 
@@ -65,6 +66,24 @@ npm run dev:server
 - `GET /api/comments`
 - `POST /api/comments`
 - `DELETE /api/comments/:id`
+- `POST /api/analytics/events`
+- `GET /api/admin/leads`
+- `GET /api/admin/leads/export.csv`
+- `GET /api/admin/analytics-summary`
+
+## Admin Dashboard
+
+- Public admin page: `/admin.html`
+- Requires request header: `x-admin-token: <ADMIN_DASHBOARD_TOKEN>`
+- Features:
+	- Leads list with pagination
+	- CSV export
+	- Analytics summary (page views, click events, lead success events)
+
+## Anti-spam
+
+- Honeypot field added to lead form (quietly rejects bot submissions)
+- Dedicated rate limiter on `/api/leads`
 
 For `DELETE /api/comments/:id`, send header:
 
@@ -86,3 +105,10 @@ Expected payload for `POST /api/leads`:
 ## Production HTTPS
 
 Deploy behind HTTPS (Nginx/Cloudflare/Load Balancer). The API rejects non-HTTPS requests in production mode.
+
+## SEO and Search Console
+
+- Main SEO tags configured in `index.html` (title, description, canonical, Open Graph, Twitter)
+- Sitemap available at `/sitemap.xml`
+- Robots file available at `/robots.txt`
+- Search Console verification requires your Google account ownership step (DNS or HTML file verification) and cannot be automated from this repository alone.

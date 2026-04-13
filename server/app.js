@@ -4,6 +4,8 @@ import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import { env } from './config/env.js'
 import { requireHttps } from './middleware/requireHttps.js'
+import adminRouter from './routes/admin.js'
+import analyticsRouter from './routes/analytics.js'
 import commentsRouter from './routes/comments.js'
 import leadsRouter from './routes/leads.js'
 
@@ -34,10 +36,18 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 })
 
+const leadsLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 12,
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true })
 })
 
-app.use('/api', apiLimiter, leadsRouter, commentsRouter)
+app.use('/api/leads', leadsLimiter)
+app.use('/api', apiLimiter, leadsRouter, commentsRouter, analyticsRouter, adminRouter)
 
 export default app

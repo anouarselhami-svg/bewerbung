@@ -672,138 +672,6 @@ video {
   outline-offset: 2px;
 }
 
-.comment-card {
-  max-width: 42rem;
-  margin-inline: auto;
-}
-
-.comment-content {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.comment-list {
-  margin-top: 1rem;
-  display: grid;
-  gap: 0.75rem;
-}
-
-.comment-item {
-  max-width: 42rem;
-  margin-inline: auto;
-}
-
-.comment-item-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.75rem;
-}
-
-.comment-item-head strong {
-  color: #1f2c43;
-}
-
-.comment-item-head span {
-  color: #5b6679;
-  font-size: 0.82rem;
-}
-
-.comment-textarea {
-  min-height: 8rem;
-  resize: vertical;
-  font: inherit;
-}
-
-.comment-rating-input {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.22rem;
-}
-
-.star-btn {
-  border: 0;
-  background: transparent;
-  color: #c0c7d4;
-  font-size: 1.45rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0;
-}
-
-.star-btn.is-active {
-  color: #f0b429;
-}
-
-.comment-error {
-  margin: 0;
-  color: #b30000;
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-
-.comment-state-text {
-  max-width: 42rem;
-  margin: 0.8rem auto 0;
-  color: #5b6679;
-  font-size: 0.92rem;
-}
-
-.comment-rating-view {
-  display: inline-flex;
-  gap: 0.14rem;
-  color: #c0c7d4;
-  font-size: 1.08rem;
-}
-
-.comment-rating-view .is-active {
-  color: #f0b429;
-}
-
-.comment-delete-btn {
-  margin-top: 0.6rem;
-  border: 1px solid #e3d7c6;
-  background: #fff;
-  color: #6b7487;
-  border-radius: 0.65rem;
-  padding: 0.42rem 0.66rem;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.comment-delete-btn:hover {
-  border-color: #dd0000;
-  color: #8b0000;
-  background: #ffecec;
-}
-
-.comment-load-more {
-  width: min(42rem, 100%);
-  margin: 0.25rem auto 0;
-  border: 1px solid #d4ccbf;
-  background: linear-gradient(145deg, #fff, #faf7f3);
-  color: #243858;
-  border-radius: 0.95rem;
-  min-height: 2.75rem;
-  padding: 0.72rem 1rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-}
-
-.comment-load-more:hover:not(:disabled) {
-  transform: translateY(-1px);
-  border-color: #dd0000;
-  background: #fff3f3;
-}
-
-.comment-load-more:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
 .footer-contact-section {
   border-top: 1px solid #e5d8c8;
   background:
@@ -861,6 +729,48 @@ video {
   border: 1px solid #e1d5c4;
   background: #fff;
   padding: 0.5rem;
+}
+
+.site-footer {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid #e2d6c6;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.site-footer p {
+  margin: 0;
+  color: #5b6679;
+  font-weight: 600;
+}
+
+.site-footer-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem;
+}
+
+.site-footer-link {
+  color: #8b0000;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.site-footer-link:hover {
+  text-decoration: underline;
+}
+
+.honeypot-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
 }
 
 .mobile-whatsapp-fab {
@@ -946,6 +856,28 @@ video {
   color: #465a76;
   font-size: 0.86rem;
   font-weight: 700;
+}
+
+.lead-feedback {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.lead-feedback-error {
+  color: #b30000;
+}
+
+.lead-feedback-success {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  border: 1px solid #a8d9b6;
+  border-radius: 0.72rem;
+  background: linear-gradient(145deg, #edf9f1, #e3f6e9);
+  color: #196c2e;
+  padding: 0.62rem 0.72rem;
 }
 
 .cta-choice-buttons {
@@ -1370,20 +1302,6 @@ select.ui-input {
     line-height: 1.45;
   }
 
-  .comment-card {
-    max-width: none;
-  }
-
-  .comment-item {
-    max-width: none;
-  }
-
-  .comment-item-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-
   .mobile-whatsapp-fab {
     position: fixed;
     right: 0.9rem;
@@ -1507,10 +1425,6 @@ select.ui-input {
 
   .card-content {
     padding: 0.86rem;
-  }
-
-  .comment-textarea {
-    min-height: 7rem;
   }
 
   .meta-item,

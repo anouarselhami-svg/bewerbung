@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Briefcase,
@@ -34,6 +34,34 @@ const Animated = motion
 
 const WHATSAPP_RECIPIENTS = ['212602910235', '212664879503']
 const WHATSAPP_ROUTING_KEY = 'whatsapp-routing-index'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
+
+const trackAnalyticsEvent = async (eventType, source, metadata = {}) => {
+  const payload = {
+    eventType,
+    path: typeof window !== 'undefined' ? window.location.pathname : '/',
+    source,
+    metadata,
+  }
+
+  if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+    navigator.sendBeacon(`${API_BASE_URL}/api/analytics/events`, blob)
+    return
+  }
+
+  try {
+    await fetch(`${API_BASE_URL}/api/analytics/events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+  } catch {
+    // Ignore analytics failures to keep primary flows responsive.
+  }
+}
 
 const formatWhatsAppNumber = (phoneNumber) => `+${phoneNumber.slice(0, 3)} ${phoneNumber.slice(3, 6)} ${phoneNumber.slice(6, 9)} ${phoneNumber.slice(9)}`
 
@@ -328,8 +356,16 @@ const scrollToSection = (sectionId) => {
 export default function App() {
   const [candidateName, setCandidateName] = useState('')
   const [candidateEmail, setCandidateEmail] = useState('')
+  const [candidateWebsite, setCandidateWebsite] = useState('')
   const [selectedDomain, setSelectedDomain] = useState(branches[0].title)
   const [selectedLevel, setSelectedLevel] = useState('B1')
+  const [leadSubmissionError, setLeadSubmissionError] = useState('')
+  const [leadSubmissionSuccess, setLeadSubmissionSuccess] = useState('')
+  const [leadSubmitting, setLeadSubmitting] = useState(false)
+
+  useEffect(() => {
+    trackAnalyticsEvent('page_view', 'landing')
+  }, [])
 
   const consultationMessage = createRegistrationMessage({
     name: candidateName,
@@ -338,8 +374,91 @@ export default function App() {
     level: selectedLevel,
   })
 
-  const handleApplyWhatsApp = () => {
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+  const saveLead = async ({ activeMember, source }) => {
+    const trimmedName = candidateName.trim()
+    const trimmedEmail = candidateEmail.trim()
+
+    setLeadSubmissionError('')
+    setLeadSubmissionSuccess('')
+
+    if (trimmedName.length < 2) {
+      setLeadSubmissionError('Veuillez saisir votre nom complet (minimum 2 caracteres).')
+      return false
+    }
+
+    if (!isValidEmail(trimmedEmail)) {
+      setLeadSubmissionError('Veuillez saisir un email valide.')
+      return false
+    }
+
+    await trackAnalyticsEvent('lead_submit_attempt', source, {
+      domain: selectedDomain,
+      languageLevel: selectedLevel,
+    })
+
+    setLeadSubmitting(true)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/leads`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: trimmedName,
+          email: trimmedEmail,
+          domain: selectedDomain,
+          languageLevel: selectedLevel,
+          source,
+          recommendedAgent: activeMember.name,
+          website: candidateWebsite,
+        }),
+      })
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        const apiError = payload?.error
+
+        if (apiError === 'Suspicious submission blocked by anti-spam check') {
+          throw new Error('Soumission bloquee par anti-spam. Videz les champs auto-remplis puis reessayez.')
+        }
+
+        throw new Error(apiError || 'Impossible d\'enregistrer votre demande pour le moment.')
+      }
+
+      setLeadSubmissionSuccess('Votre demande a bien ete enregistree.')
+      await trackAnalyticsEvent('lead_submit_success', source, {
+        domain: selectedDomain,
+        languageLevel: selectedLevel,
+      })
+      return true
+    } catch (error) {
+      setLeadSubmissionError(error instanceof Error ? error.message : 'Erreur reseau, veuillez reessayer.')
+      return false
+    } finally {
+      setLeadSubmitting(false)
+    }
+  }
+
+  const handleApplyWhatsApp = async () => {
+    if (leadSubmitting) {
+      return
+    }
+
     const activeMember = getNextApplicationMember()
+    const leadSaved = await saveLead({ activeMember, source: 'site-web-whatsapp' })
+
+    if (!leadSaved) {
+      return
+    }
+
+    trackAnalyticsEvent('click_whatsapp', 'contact-cta', {
+      domain: selectedDomain,
+      languageLevel: selectedLevel,
+    })
+
     const applicationLink = `https://wa.me/${activeMember.phone}?text=${encodeURIComponent(
       `${consultationMessage}\n\nCanal choisi: WhatsApp\nConseiller assigne: ${activeMember.name} (+${activeMember.phone})\nMerci de me contacter pour finaliser ma candidature.`,
     )}`
@@ -348,8 +467,23 @@ export default function App() {
     window.open(applicationLink, '_blank', 'noopener,noreferrer')
   }
 
-  const handleApplyEmail = () => {
+  const handleApplyEmail = async () => {
+    if (leadSubmitting) {
+      return
+    }
+
     const activeMember = getNextApplicationMember()
+    const leadSaved = await saveLead({ activeMember, source: 'site-web-email' })
+
+    if (!leadSaved) {
+      return
+    }
+
+    trackAnalyticsEvent('click_email', 'contact-cta', {
+      domain: selectedDomain,
+      languageLevel: selectedLevel,
+    })
+
     const emailSubject = encodeURIComponent('Nouvelle candidature - Service Carriere Allemagne')
     const emailBody = encodeURIComponent(
       `${consultationMessage}\n\nCanal choisi: Email\nConseiller assigne: ${activeMember.name} (+${activeMember.phone})`,
@@ -608,6 +742,21 @@ export default function App() {
             </div>
 
             <div className="cta-form">
+              <div className="honeypot-field" aria-hidden="true">
+                <label htmlFor="company-website">Site web</label>
+                <input
+                  id="company-website"
+                  name="company_website_hp"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="new-password"
+                  inputMode="none"
+                  spellCheck={false}
+                  value={candidateWebsite}
+                  onChange={(event) => setCandidateWebsite(event.target.value)}
+                />
+              </div>
+
               <Input
                 placeholder="Votre nom complet"
                 value={candidateName}
@@ -652,12 +801,19 @@ export default function App() {
               </fieldset>
 
               <p className="cta-choice-label">Choisissez votre mode de candidature</p>
+              {leadSubmissionError && <p className="lead-feedback lead-feedback-error">{leadSubmissionError}</p>}
+              {leadSubmissionSuccess && (
+                <p className="lead-feedback lead-feedback-success" role="status" aria-live="polite">
+                  <CheckCircle2 className="icon-xs" />
+                  {leadSubmissionSuccess}
+                </p>
+              )}
               <div className="cta-choice-buttons">
-                <Button className="cta-button" type="button" onClick={handleApplyWhatsApp}>
-                  Postuler via WhatsApp <Phone className="icon-xs ml-2" />
+                <Button className="cta-button" type="button" onClick={handleApplyWhatsApp} disabled={leadSubmitting}>
+                  {leadSubmitting ? 'Enregistrement...' : 'Postuler via WhatsApp'} <Phone className="icon-xs ml-2" />
                 </Button>
-                <Button className="cta-button" type="button" variant="outline" onClick={handleApplyEmail}>
-                  Postuler par email <Mail className="icon-xs ml-2" />
+                <Button className="cta-button" type="button" variant="outline" onClick={handleApplyEmail} disabled={leadSubmitting}>
+                  {leadSubmitting ? 'Enregistrement...' : 'Postuler par email'} <Mail className="icon-xs ml-2" />
                 </Button>
               </div>
             </div>
@@ -708,6 +864,18 @@ export default function App() {
             </CardContent>
           </Card>
         </div>
+
+        <footer className="site-footer">
+          <p>Informations legales:</p>
+          <div className="site-footer-links">
+            <a className="site-footer-link" href="/legal.html">
+              Mentions legales et confidentialite
+            </a>
+            <a className="site-footer-link" href="/admin.html">
+              Dashboard admin
+            </a>
+          </div>
+        </footer>
       </section>
 
       <a

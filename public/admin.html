@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Admin Leads</title>
+    <style>
+      :root {
+        --bg: #f5efe4;
+        --surface: #ffffff;
+        --text: #1f2c43;
+        --muted: #5a6478;
+        --border: #e3d7c6;
+        --accent: #8b0000;
+        --ok: #196c2e;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text);
+        background: radial-gradient(circle at 10% 10%, #ffedc8 0, transparent 28%), var(--bg);
+      }
+
+      .wrap {
+        width: min(1100px, calc(100% - 1.5rem));
+        margin: 1.5rem auto 2rem;
+        display: grid;
+        gap: 0.9rem;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1rem;
+      }
+
+      h1,
+      h2 {
+        margin: 0 0 0.7rem;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        align-items: center;
+      }
+
+      .filters {
+        margin-top: 0.8rem;
+      }
+
+      .input,
+      .btn {
+        min-height: 2.7rem;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+      }
+
+      .input {
+        flex: 1;
+        min-width: 240px;
+        padding: 0 0.8rem;
+      }
+
+      .input-sm {
+        flex: 0 1 180px;
+        min-width: 160px;
+      }
+
+      .btn {
+        padding: 0 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        background: #fff;
+      }
+
+      .btn-primary {
+        border-color: #3f5b86;
+        background: linear-gradient(135deg, #243858, #1a2d4d);
+        color: #fff;
+      }
+
+      .btn-danger {
+        border-color: #b63333;
+        color: #8b0000;
+        background: #fff3f3;
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .status {
+        margin-top: 0.7rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .status.error {
+        color: #b30000;
+      }
+
+      .status.ok {
+        color: var(--ok);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.6rem;
+      }
+
+      .stat {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.75rem;
+      }
+
+      .stat strong {
+        display: block;
+        margin-bottom: 0.2rem;
+      }
+
+      .table-wrap {
+        overflow: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 780px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #ece3d6;
+        padding: 0.55rem;
+        font-size: 0.9rem;
+        text-align: left;
+      }
+
+      th {
+        color: #2e3f62;
+        background: #faf6ef;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-top: 0.8rem;
+      }
+
+      .link-home {
+        color: var(--accent);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      @media (max-width: 860px) {
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card">
+        <h1>Dashboard Admin</h1>
+        <p>Consultez les leads, les stats de clics/postulations et exportez les donnees en CSV.</p>
+        <div class="row" style="margin-top: 0.8rem">
+          <input id="adminToken" class="input" type="password" placeholder="Token admin" />
+          <button id="loadBtn" class="btn btn-primary">Charger les donnees</button>
+          <button id="exportBtn" class="btn">Exporter CSV</button>
+          <button id="clearBtn" class="btn btn-danger">Effacer token</button>
+        </div>
+        <div class="row filters">
+          <input id="searchInput" class="input" type="text" placeholder="Recherche nom/email/source" />
+          <input id="domainInput" class="input input-sm" type="text" placeholder="Filtrer domaine" />
+          <input id="startDateInput" class="input input-sm" type="date" />
+          <input id="endDateInput" class="input input-sm" type="date" />
+          <button id="applyFiltersBtn" class="btn">Appliquer filtres</button>
+          <button id="resetFiltersBtn" class="btn">Reinitialiser</button>
+        </div>
+        <p id="status" class="status"></p>
+      </section>
+
+      <section class="card">
+        <h2>Analytics</h2>
+        <div id="stats" class="stats"></div>
+      </section>
+
+      <section class="card">
+        <h2>Leads enregistres</h2>
+        <p id="leadCount" style="margin-bottom: 0.6rem"></p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Domaine</th>
+                <th>Niveau</th>
+                <th>Canal</th>
+                <th>Conseiller</th>
+              </tr>
+            </thead>
+            <tbody id="leadsTableBody"></tbody>
+          </table>
+        </div>
+        <div class="actions">
+          <button id="moreBtn" class="btn">Charger plus</button>
+          <a class="link-home" href="/">Retour au site</a>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const API_BASE = window.location.origin
+      const PAGE_SIZE = 50
+      let offset = 0
+      let hasMore = false
+
+      const tokenInput = document.getElementById('adminToken')
+      const loadBtn = document.getElementById('loadBtn')
+      const exportBtn = document.getElementById('exportBtn')
+      const clearBtn = document.getElementById('clearBtn')
+      const searchInput = document.getElementById('searchInput')
+      const domainInput = document.getElementById('domainInput')
+      const startDateInput = document.getElementById('startDateInput')
+      const endDateInput = document.getElementById('endDateInput')
+      const applyFiltersBtn = document.getElementById('applyFiltersBtn')
+      const resetFiltersBtn = document.getElementById('resetFiltersBtn')
+      const moreBtn = document.getElementById('moreBtn')
+      const statusEl = document.getElementById('status')
+      const statsEl = document.getElementById('stats')
+      const leadCountEl = document.getElementById('leadCount')
+      const leadsTableBody = document.getElementById('leadsTableBody')
+
+      const savedToken = window.localStorage.getItem('admin-dashboard-token') || ''
+      tokenInput.value = savedToken
+
+      const setStatus = (message, kind = 'ok') => {
+        statusEl.textContent = message
+        statusEl.className = `status ${kind}`
+      }
+
+      const getToken = () => tokenInput.value.trim()
+
+      const buildHeaders = () => {
+        const token = getToken()
+        return token ? { 'x-admin-token': token } : {}
+      }
+
+      const extractApiError = async (response, fallbackMessage) => {
+        if (response.status === 401) {
+          return 'Token admin invalide ou manquant.'
+        }
+
+        const payload = await response.json().catch(() => null)
+        return payload?.error || fallbackMessage
+      }
+
+      const formatDate = (iso) => {
+        try {
+          return new Date(iso).toLocaleString('fr-FR')
+        } catch {
+          return iso
+        }
+      }
+
+      const escapeHtml = (value) => {
+        const stringValue = value == null ? '' : String(value)
+
+        return stringValue
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;')
+      }
+
+      const buildFilterParams = () => {
+        const params = new URLSearchParams()
+
+        params.set('limit', String(PAGE_SIZE))
+        params.set('offset', String(offset))
+
+        const search = searchInput.value.trim()
+        const domain = domainInput.value.trim()
+        const startDate = startDateInput.value
+        const endDate = endDateInput.value
+
+        if (search) {
+          params.set('search', search)
+        }
+
+        if (domain) {
+          params.set('domain', domain)
+        }
+
+        if (startDate) {
+          params.set('startDate', startDate)
+        }
+
+        if (endDate) {
+          params.set('endDate', endDate)
+        }
+
+        return params
+      }
+
+      const renderStats = (totals) => {
+        const byType = Object.fromEntries(totals.map((item) => [item.eventType, item.total]))
+        const cards = [
+          ['Visites page', byType.page_view || 0],
+          ['Clic WhatsApp', byType.click_whatsapp || 0],
+          ['Clic Email', byType.click_email || 0],
+          ['Postulations validees', byType.lead_submit_success || 0],
+        ]
+
+        statsEl.innerHTML = cards
+          .map(([label, value]) => `<article class="stat"><strong>${value}</strong><p>${label}</p></article>`)
+          .join('')
+      }
+
+      const appendLeads = (leads) => {
+        const rows = leads
+          .map(
+            (lead) => `
+              <tr>
+                <td>${lead.id}</td>
+                <td>${escapeHtml(formatDate(lead.createdAt))}</td>
+                <td>${escapeHtml(lead.fullName)}</td>
+                <td>${escapeHtml(lead.email)}</td>
+                <td>${escapeHtml(lead.domain)}</td>
+                <td>${escapeHtml(lead.languageLevel)}</td>
+                <td>${escapeHtml(lead.source || '')}</td>
+                <td>${escapeHtml(lead.recommendedAgent || '')}</td>
+              </tr>
+            `,
+          )
+          .join('')
+
+        leadsTableBody.insertAdjacentHTML('beforeend', rows)
+      }
+
+      const loadAnalytics = async () => {
+        const response = await fetch(`${API_BASE}/api/admin/analytics-summary`, {
+          headers: buildHeaders(),
+        })
+
+        if (!response.ok) {
+          throw new Error(await extractApiError(response, 'Impossible de charger les analytics'))
+        }
+
+        const payload = await response.json()
+        renderStats(Array.isArray(payload.totals) ? payload.totals : [])
+      }
+
+      const loadLeads = async (append = false) => {
+        const response = await fetch(`${API_BASE}/api/admin/leads?${buildFilterParams().toString()}`, {
+          headers: buildHeaders(),
+        })
+
+        if (!response.ok) {
+          throw new Error(await extractApiError(response, 'Impossible de charger les leads'))
+        }
+
+        const payload = await response.json()
+        const leads = Array.isArray(payload.leads) ? payload.leads : []
+
+        if (!append) {
+          leadsTableBody.innerHTML = ''
+        }
+
+        appendLeads(leads)
+        leadCountEl.textContent = `Total leads: ${payload.total || 0}`
+        hasMore = Boolean(payload.hasMore)
+        moreBtn.disabled = !hasMore
+        offset += leads.length
+      }
+
+      const loadAll = async () => {
+        const token = getToken()
+
+        if (!token) {
+          setStatus('Veuillez saisir un token admin.', 'error')
+          return
+        }
+
+        loadBtn.disabled = true
+        setStatus('Chargement en cours...', 'ok')
+
+        try {
+          window.localStorage.setItem('admin-dashboard-token', token)
+          offset = 0
+          await Promise.all([loadAnalytics(), loadLeads(false)])
+          setStatus('Donnees chargees avec succes.', 'ok')
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : 'Erreur inconnue', 'error')
+        } finally {
+          loadBtn.disabled = false
+        }
+      }
+
+      const exportCsv = async () => {
+        const token = getToken()
+
+        if (!token) {
+          setStatus('Token admin requis pour exporter.', 'error')
+          return
+        }
+
+        exportBtn.disabled = true
+
+        try {
+          const exportParams = buildFilterParams()
+          exportParams.delete('limit')
+          exportParams.delete('offset')
+
+          const response = await fetch(`${API_BASE}/api/admin/leads/export.csv?${exportParams.toString()}`, {
+            headers: buildHeaders(),
+          })
+
+          if (!response.ok) {
+            throw new Error(await extractApiError(response, 'Export CSV indisponible'))
+          }
+
+          const blob = await response.blob()
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = 'leads-export.csv'
+          link.click()
+          URL.revokeObjectURL(url)
+          setStatus('Export CSV termine.', 'ok')
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : 'Erreur export', 'error')
+        } finally {
+          exportBtn.disabled = false
+        }
+      }
+
+      loadBtn.addEventListener('click', loadAll)
+
+      applyFiltersBtn.addEventListener('click', async () => {
+        offset = 0
+        await loadAll()
+      })
+
+      resetFiltersBtn.addEventListener('click', async () => {
+        searchInput.value = ''
+        domainInput.value = ''
+        startDateInput.value = ''
+        endDateInput.value = ''
+
+        if (getToken()) {
+          offset = 0
+          await loadAll()
+          setStatus('Filtres reinitialises.', 'ok')
+          return
+        }
+
+        setStatus('Filtres reinitialises. Ajoutez le token puis chargez les donnees.', 'ok')
+      })
+
+      moreBtn.addEventListener('click', async () => {
+        if (!hasMore) {
+          return
+        }
+
+        moreBtn.disabled = true
+
+        try {
+          await loadLeads(true)
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : 'Erreur chargement', 'error')
+        } finally {
+          moreBtn.disabled = !hasMore
+        }
+      })
+
+      exportBtn.addEventListener('click', exportCsv)
+
+      clearBtn.addEventListener('click', () => {
+        tokenInput.value = ''
+        window.localStorage.removeItem('admin-dashboard-token')
+        setStatus('Token efface.', 'ok')
+      })
+
+      if (savedToken) {
+        loadAll()
+      }
+    </script>
+  </body>
+</html>

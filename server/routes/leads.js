@@ -11,6 +11,7 @@ const LeadSchema = z.object({
   languageLevel: z.enum(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']),
   source: z.string().trim().max(80).default('site-web'),
   recommendedAgent: z.string().trim().max(120).optional(),
+  website: z.string().trim().max(255).optional(),
 })
 
 router.post('/leads', async (req, res) => {
@@ -24,6 +25,11 @@ router.post('/leads', async (req, res) => {
   }
 
   const lead = parsed.data
+
+  if (lead.website && lead.website.trim().length > 0) {
+    // Honeypot field: bots often fill hidden fields.
+    return res.status(400).json({ error: 'Suspicious submission blocked by anti-spam check' })
+  }
 
   try {
     const query = `

@@ -12,6 +12,7 @@ const EnvSchema = z.object({
   FRONTEND_ORIGIN: z.preprocess(trimIfString, z.string().min(1)).default('http://localhost:5173'),
   PGSSL: z.preprocess(trimIfString, z.enum(['true', 'false'])).default('false'),
   COMMENT_ADMIN_TOKEN: z.preprocess(trimIfString, z.string().trim().min(8)).optional(),
+  ADMIN_DASHBOARD_TOKEN: z.preprocess(trimIfString, z.string().trim().min(8)).optional(),
 })
 
 const parsed = EnvSchema.safeParse(process.env)

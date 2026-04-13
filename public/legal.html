@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mentions legales et confidentialite</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f8f3ea;
+        --surface: #ffffff;
+        --text: #1f2c43;
+        --muted: #5b6679;
+        --border: #e2d6c6;
+        --accent: #8b0000;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text);
+        background: radial-gradient(circle at top right, #ffe9bf 0%, transparent 30%), var(--bg);
+      }
+
+      .legal-wrap {
+        width: min(920px, calc(100% - 2rem));
+        margin: 2rem auto 3rem;
+        display: grid;
+        gap: 1rem;
+      }
+
+      .legal-head,
+      .legal-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.15rem;
+      }
+
+      h1,
+      h2 {
+        margin: 0 0 0.65rem;
+        line-height: 1.2;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 1.1rem;
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: var(--accent);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .back-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="legal-wrap">
+      <section class="legal-head">
+        <h1>Mentions legales et politique de confidentialite</h1>
+        <p>
+          Cette page presente les informations legales minimales du service et la maniere dont les donnees des
+          candidats sont traitees.
+        </p>
+        <a class="back-link" href="/">Retour au site principal</a>
+      </section>
+
+      <section class="legal-card" id="mentions-legales">
+        <h2>Mentions legales</h2>
+        <ul>
+          <li>Nom du service: Service Carriere Allemagne</li>
+          <li>Activite: accompagnement candidature, orientation et mise en relation</li>
+          <li>Contact principal: baloua96@hotmail.fr</li>
+          <li>Hebergeur: Vercel (infrastructure cloud)</li>
+        </ul>
+      </section>
+
+      <section class="legal-card" id="confidentialite">
+        <h2>Politique de confidentialite</h2>
+        <ul>
+          <li>Donnees collectees: nom, email, domaine choisi, niveau de langue et canal de candidature.</li>
+          <li>Finalite: enregistrer et traiter les demandes de candidature.</li>
+          <li>Base legale: consentement de l'utilisateur lors de l'envoi du formulaire.</li>
+          <li>Mesures anti-spam: controle honeypot et limitation de requetes sur les formulaires.</li>
+          <li>Conservation: donnees conservees le temps necessaire au suivi des demandes.</li>
+          <li>Partage: aucune revente des donnees; acces limite a l'equipe de suivi.</li>
+          <li>Droits utilisateur: demander acces, correction ou suppression via l'email de contact.</li>
+        </ul>
+      </section>
+
+      <section class="legal-card" id="validation-juridique">
+        <h2>Validation juridique</h2>
+        <p>
+          Le contenu de cette page est une base operationnelle de conformite et doit etre valide par un juriste
+          qualifie selon votre pays d'exploitation (RGPD, lois locales, obligations professionnelles et fiscales).
+        </p>
+        <p>Derniere mise a jour: 13/04/2026</p>
+      </section>
+    </main>
+  </body>
+</html>

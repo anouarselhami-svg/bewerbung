@@ -42,6 +42,20 @@ CREATE TABLE IF NOT EXISTS comments (
 
 CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments (created_at DESC);
 
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id BIGSERIAL PRIMARY KEY,
+  event_type VARCHAR(60) NOT NULL,
+  path VARCHAR(200) NOT NULL,
+  source VARCHAR(100),
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  user_agent TEXT,
+  ip_address VARCHAR(80),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_analytics_events_type ON analytics_events (event_type);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events (created_at DESC);
+
 INSERT INTO agents (full_name, phone, specialties)
 VALUES
   ('Contact 1', '212664879503', 'Pflege,Altenpflege,IT Support,Koch / Köchin,Gastronomie,Hotellerie,Mechaniker/in,Mechatroniker/in,Elektriker/in,Lagerlogistik,Verkäufer/in,KFZ-Technik'),
