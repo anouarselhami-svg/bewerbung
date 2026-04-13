@@ -34,7 +34,29 @@ const Animated = motion
 
 const WHATSAPP_RECIPIENTS = ['212602910235', '212664879503']
 const WHATSAPP_ROUTING_KEY = 'whatsapp-routing-index'
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
+const DEFAULT_SITE_ORIGIN = 'https://testservice-mu.vercel.app'
+
+const resolveApiBaseUrl = () => {
+  const envBase = import.meta.env.VITE_API_BASE_URL?.trim()
+
+  if (envBase) {
+    return envBase
+  }
+
+  if (typeof window === 'undefined') {
+    return ''
+  }
+
+  const host = window.location.hostname.toLowerCase()
+
+  if (host.includes('translate.goog') || host.includes('translate.google')) {
+    return DEFAULT_SITE_ORIGIN
+  }
+
+  return ''
+}
+
+const API_BASE_URL = resolveApiBaseUrl()
 
 const trackAnalyticsEvent = async (eventType, source, metadata = {}) => {
   const payload = {

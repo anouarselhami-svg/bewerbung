@@ -270,7 +270,7 @@
 
       const extractApiError = async (response, fallbackMessage) => {
         if (response.status === 401) {
-          return 'Token admin invalide ou manquant.'
+          return 'Token admin invalide ou manquant. Verifiez ADMIN_DASHBOARD_TOKEN dans Vercel.'
         }
 
         const payload = await response.json().catch(() => null)
