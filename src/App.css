@@ -87,11 +87,18 @@ video {
   border: 1px solid #d5c8aa;
   background: linear-gradient(145deg, #fff9e8, #fff2d1);
   color: #3a2b00;
+  min-width: 3.25rem;
   box-shadow: 0 8px 18px rgba(176, 130, 0, 0.18);
 }
 
 .translate-button:hover {
   background: linear-gradient(145deg, #fff4d8, #ffeab8);
+}
+
+.translate-button-active {
+  border-color: #d19a00;
+  background: linear-gradient(145deg, #ffe39a, #ffd45e);
+  box-shadow: 0 10px 20px rgba(176, 130, 0, 0.3);
 }
 
 .brand {
@@ -991,6 +998,39 @@ select.ui-input {
 
 .ml-2 {
   margin-left: 0.5rem;
+}
+
+[dir='rtl'] .ml-2 {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+[dir='rtl'] .hero-copy,
+[dir='rtl'] .section-intro,
+[dir='rtl'] .split-copy,
+[dir='rtl'] .cta-content > div:first-child {
+  text-align: right;
+}
+
+[dir='rtl'] .topbar {
+  flex-direction: row-reverse;
+}
+
+[dir='rtl'] .topbar-actions {
+  flex-direction: row-reverse;
+}
+
+[dir='rtl'] .brand {
+  flex-direction: row-reverse;
+}
+
+[dir='rtl'] .meta-item,
+[dir='rtl'] .check-row,
+[dir='rtl'] .branch-detail-item,
+[dir='rtl'] .faq-item summary,
+[dir='rtl'] .step-card,
+[dir='rtl'] .section-heading {
+  flex-direction: row-reverse;
 }
 
 @media (max-width: 1080px) {

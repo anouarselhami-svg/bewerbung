@@ -124,6 +124,10 @@
         gap: 0.6rem;
       }
 
+      .summary-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
       .stat {
         border: 1px solid var(--border);
         border-radius: 10px;
@@ -133,6 +137,72 @@
       .stat strong {
         display: block;
         margin-bottom: 0.2rem;
+      }
+
+      .summary-total {
+        color: #243858;
+      }
+
+      .summary-pending {
+        color: #7a4f00;
+      }
+
+      .summary-validated {
+        color: #0f6a35;
+      }
+
+      .summary-cancelled {
+        color: #981e1e;
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 92px;
+        padding: 0.22rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        border: 1px solid transparent;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .status-pending {
+        background: linear-gradient(135deg, #fff6db, #ffe5a8);
+        color: #7a4f00;
+        border-color: #e0b84f;
+      }
+
+      .status-validated {
+        background: linear-gradient(135deg, #e7f9ee, #bff0ce);
+        color: #0f6a35;
+        border-color: #78c495;
+      }
+
+      .status-cancelled {
+        background: linear-gradient(135deg, #fdecec, #f7c9c9);
+        color: #981e1e;
+        border-color: #df8080;
+      }
+
+      .lead-status-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+
+      .lead-status-btn {
+        min-height: 2.1rem;
+        padding: 0 0.65rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+      }
+
+      .lead-status-btn-active {
+        opacity: 0.7;
+        cursor: default;
       }
 
       .table-wrap {
@@ -192,6 +262,12 @@
         <div class="row filters">
           <input id="searchInput" class="input" type="text" placeholder="Recherche nom/email/source" />
           <input id="domainInput" class="input input-sm" type="text" placeholder="Filtrer domaine" />
+          <select id="statusInput" class="input input-sm">
+            <option value="">Tous statuts</option>
+            <option value="pending">En attente</option>
+            <option value="validated">Validé</option>
+            <option value="cancelled">Annulé</option>
+          </select>
           <input id="startDateInput" class="input input-sm" type="date" />
           <input id="endDateInput" class="input input-sm" type="date" />
           <button id="applyFiltersBtn" class="btn">Appliquer filtres</button>
@@ -203,6 +279,11 @@
       <section class="card">
         <h2>Analytics</h2>
         <div id="stats" class="stats"></div>
+      </section>
+
+      <section class="card">
+        <h2>Statuts des leads</h2>
+        <div id="leadSummary" class="stats summary-grid"></div>
       </section>
 
       <section class="card">
@@ -218,8 +299,10 @@
                 <th>Email</th>
                 <th>Domaine</th>
                 <th>Niveau</th>
+                <th>Statut</th>
                 <th>Canal</th>
                 <th>Conseiller</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="leadsTableBody"></tbody>
@@ -244,6 +327,7 @@
       const clearBtn = document.getElementById('clearBtn')
       const searchInput = document.getElementById('searchInput')
       const domainInput = document.getElementById('domainInput')
+      const statusInput = document.getElementById('statusInput')
       const startDateInput = document.getElementById('startDateInput')
       const endDateInput = document.getElementById('endDateInput')
       const applyFiltersBtn = document.getElementById('applyFiltersBtn')
@@ -251,6 +335,7 @@
       const moreBtn = document.getElementById('moreBtn')
       const statusEl = document.getElementById('status')
       const statsEl = document.getElementById('stats')
+      const leadSummaryEl = document.getElementById('leadSummary')
       const leadCountEl = document.getElementById('leadCount')
       const leadsTableBody = document.getElementById('leadsTableBody')
 
@@ -297,6 +382,34 @@
           .replaceAll("'", '&#039;')
       }
 
+      const escapeAttribute = (value) => escapeHtml(value).replaceAll('"', '&quot;')
+
+      const normalizeStatus = (status) => {
+        const value = String(status || 'pending').toLowerCase()
+
+        if (value === 'validated') {
+          return 'validated'
+        }
+
+        if (value === 'cancelled') {
+          return 'cancelled'
+        }
+
+        return 'pending'
+      }
+
+      const formatStatusLabel = (status) => {
+        if (status === 'validated') {
+          return 'Validé'
+        }
+
+        if (status === 'cancelled') {
+          return 'Annulé'
+        }
+
+        return 'En attente'
+      }
+
       const buildFilterParams = () => {
         const params = new URLSearchParams()
 
@@ -305,6 +418,7 @@
 
         const search = searchInput.value.trim()
         const domain = domainInput.value.trim()
+        const status = statusInput.value.trim()
         const startDate = startDateInput.value
         const endDate = endDateInput.value
 
@@ -314,6 +428,10 @@
 
         if (domain) {
           params.set('domain', domain)
+        }
+
+        if (status) {
+          params.set('status', status)
         }
 
         if (startDate) {
@@ -341,6 +459,19 @@
           .join('')
       }
 
+      const renderLeadSummary = (summary) => {
+        const cards = [
+          ['Total leads', summary.total || 0, 'summary-total'],
+          ['En attente', summary.pending || 0, 'summary-pending'],
+          ['Validés', summary.validated || 0, 'summary-validated'],
+          ['Annulés', summary.cancelled || 0, 'summary-cancelled'],
+        ]
+
+        leadSummaryEl.innerHTML = cards
+          .map(([label, value, className]) => `<article class="stat"><strong class="${className}">${value}</strong><p>${label}</p></article>`)
+          .join('')
+      }
+
       const appendLeads = (leads) => {
         const rows = leads
           .map(
@@ -352,8 +483,16 @@
                 <td>${escapeHtml(lead.email)}</td>
                 <td>${escapeHtml(lead.domain)}</td>
                 <td>${escapeHtml(lead.languageLevel)}</td>
+                <td><span class="status-chip status-${escapeHtml(normalizeStatus(lead.status))}">${escapeHtml(formatStatusLabel(normalizeStatus(lead.status)))}</span></td>
                 <td>${escapeHtml(lead.source || '')}</td>
                 <td>${escapeHtml(lead.recommendedAgent || '')}</td>
+                <td>
+                  <div class="lead-status-actions">
+                    <button class="btn lead-status-btn ${normalizeStatus(lead.status) === 'validated' ? 'lead-status-btn-active' : ''}" type="button" data-lead-id="${escapeAttribute(lead.id)}" data-status="validated">Valider</button>
+                    <button class="btn lead-status-btn ${normalizeStatus(lead.status) === 'pending' ? 'lead-status-btn-active' : ''}" type="button" data-lead-id="${escapeAttribute(lead.id)}" data-status="pending">En attente</button>
+                    <button class="btn lead-status-btn ${normalizeStatus(lead.status) === 'cancelled' ? 'lead-status-btn-active' : ''}" type="button" data-lead-id="${escapeAttribute(lead.id)}" data-status="cancelled">Annuler</button>
+                  </div>
+                </td>
               </tr>
             `,
           )
@@ -373,6 +512,19 @@
 
         const payload = await response.json()
         renderStats(Array.isArray(payload.totals) ? payload.totals : [])
+      }
+
+      const loadLeadSummary = async () => {
+        const response = await fetch(`${API_BASE}/api/admin/leads-summary`, {
+          headers: buildHeaders(),
+        })
+
+        if (!response.ok) {
+          throw new Error(await extractApiError(response, 'Impossible de charger le résumé des leads'))
+        }
+
+        const payload = await response.json()
+        renderLeadSummary(payload || {})
       }
 
       const loadLeads = async (append = false) => {
@@ -398,6 +550,23 @@
         offset += leads.length
       }
 
+      const updateLeadStatus = async (leadId, status) => {
+        const response = await fetch(`${API_BASE}/api/admin/leads/${leadId}/status`, {
+          method: 'PATCH',
+          headers: {
+            ...buildHeaders(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status }),
+        })
+
+        if (!response.ok) {
+          throw new Error(await extractApiError(response, 'Impossible de mettre à jour le statut'))
+        }
+
+        return response.json()
+      }
+
       const loadAll = async () => {
         const token = getToken()
 
@@ -412,7 +581,7 @@
         try {
           window.localStorage.setItem('admin-dashboard-token', token)
           offset = 0
-          await Promise.all([loadAnalytics(), loadLeads(false)])
+          await Promise.all([loadAnalytics(), loadLeadSummary(), loadLeads(false)])
           setStatus('Donnees chargees avec succes.', 'ok')
         } catch (error) {
           if (error instanceof Error && error.message.includes('Token admin invalide ou manquant')) {
@@ -473,6 +642,7 @@
       resetFiltersBtn.addEventListener('click', async () => {
         searchInput.value = ''
         domainInput.value = ''
+        statusInput.value = ''
         startDateInput.value = ''
         endDateInput.value = ''
 
@@ -503,6 +673,38 @@
       })
 
       exportBtn.addEventListener('click', exportCsv)
+
+      leadsTableBody.addEventListener('click', async (event) => {
+        const target = event.target
+
+        if (!(target instanceof HTMLElement)) {
+          return
+        }
+
+        const leadId = target.getAttribute('data-lead-id')
+        const status = target.getAttribute('data-status')
+
+        if (!leadId || !status) {
+          return
+        }
+
+        if (target.classList.contains('lead-status-btn-active')) {
+          return
+        }
+
+        target.setAttribute('disabled', 'disabled')
+
+        try {
+          await updateLeadStatus(leadId, status)
+          setStatus('Statut du lead mis à jour.', 'ok')
+          offset = 0
+          await loadAll()
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : 'Erreur statut lead', 'error')
+        } finally {
+          target.removeAttribute('disabled')
+        }
+      })
 
       clearBtn.addEventListener('click', () => {
         tokenInput.value = ''

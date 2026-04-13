@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS leads (
   language_level VARCHAR(2) NOT NULL CHECK (language_level IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')),
   source VARCHAR(80) NOT NULL DEFAULT 'site-web',
   recommended_agent VARCHAR(120),
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'validated', 'cancelled')),
+  status_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

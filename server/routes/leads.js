@@ -3,6 +3,25 @@ import { z } from 'zod'
 import { pool } from '../db/pool.js'
 
 const router = Router()
+let leadStatusSchemaReady = false
+
+const ensureLeadStatusSchema = async () => {
+  if (leadStatusSchemaReady) {
+    return
+  }
+
+  await pool.query(`
+    ALTER TABLE leads
+    ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'pending'
+  `)
+
+  await pool.query(`
+    ALTER TABLE leads
+    ADD COLUMN IF NOT EXISTS status_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  `)
+
+  leadStatusSchemaReady = true
+}
 
 const LeadSchema = z.object({
   fullName: z.string().trim().min(2).max(120),
@@ -19,7 +38,7 @@ router.post('/leads', async (req, res) => {
 
   if (!parsed.success) {
     return res.status(400).json({
-      error: 'Invalid payload',
+      error: 'Donnees invalides',
       details: parsed.error.flatten(),
     })
   }
@@ -28,13 +47,29 @@ router.post('/leads', async (req, res) => {
 
   if (lead.website && lead.website.trim().length > 0) {
     // Honeypot field: bots often fill hidden fields.
-    return res.status(400).json({ error: 'Suspicious submission blocked by anti-spam check' })
+    return res.status(400).json({ error: 'Soumission bloquee par la protection anti-spam' })
   }
 
   try {
+    await ensureLeadStatusSchema()
+
+    const existingLead = await pool.query(
+      `
+      SELECT id
+      FROM leads
+      WHERE LOWER(email) = LOWER($1)
+      LIMIT 1
+      `,
+      [lead.email],
+    )
+
+    if (existingLead.rowCount > 0) {
+      return res.status(409).json({ error: 'Cet email a deja postule' })
+    }
+
     const query = `
-      INSERT INTO leads (full_name, email, domain, language_level, source, recommended_agent)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO leads (full_name, email, domain, language_level, source, recommended_agent, status, status_updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW())
       RETURNING id, created_at
     `
 
@@ -50,14 +85,14 @@ router.post('/leads', async (req, res) => {
     const result = await pool.query(query, values)
 
     return res.status(201).json({
-      message: 'Lead created',
+      message: 'Candidature enregistree',
       leadId: result.rows[0].id,
       createdAt: result.rows[0].created_at,
     })
   } catch (error) {
     console.error('Failed to save lead:', error)
     return res.status(500).json({
-      error: 'Server error while storing lead',
+      error: 'Erreur serveur lors de l\'enregistrement',
     })
   }
 })

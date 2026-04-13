@@ -3,6 +3,7 @@ import { pool } from '../db/pool.js'
 import { env } from '../config/env.js'
 
 const router = Router()
+let leadStatusSchemaReady = false
 
 const getAdminToken = () => env.ADMIN_DASHBOARD_TOKEN || env.COMMENT_ADMIN_TOKEN
 
@@ -35,6 +36,7 @@ const buildLeadFilters = (query) => {
 
   const search = query.search?.toString().trim()
   const domain = query.domain?.toString().trim()
+  const status = query.status?.toString().trim().toLowerCase()
   const startDate = query.startDate?.toString().trim()
   const endDate = query.endDate?.toString().trim()
 
@@ -47,6 +49,11 @@ const buildLeadFilters = (query) => {
   if (domain) {
     values.push(`%${domain}%`)
     clauses.push(`domain ILIKE $${values.length}`)
+  }
+
+  if (status && ['pending', 'validated', 'cancelled'].includes(status)) {
+    values.push(status)
+    clauses.push(`status = $${values.length}`)
   }
 
   if (startDate && isValidDateInput(startDate)) {
@@ -65,16 +72,54 @@ const buildLeadFilters = (query) => {
   }
 }
 
+const ensureLeadStatusSchema = async () => {
+  if (leadStatusSchemaReady) {
+    return
+  }
+
+  await pool.query(`
+    ALTER TABLE leads
+    ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'pending'
+  `)
+
+  await pool.query(`
+    ALTER TABLE leads
+    ADD COLUMN IF NOT EXISTS status_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  `)
+
+  leadStatusSchemaReady = true
+}
+
+const normalizeStatus = (value) => {
+  const normalized = String(value ?? '').trim().toLowerCase()
+
+  if (['pending', 'validé', 'valide', 'validated', 'approved'].includes(normalized)) {
+    return 'validated'
+  }
+
+  if (['en attente', 'pending', 'waiting'].includes(normalized)) {
+    return 'pending'
+  }
+
+  if (['annulé', 'annule', 'canceled', 'cancelled', 'rejected'].includes(normalized)) {
+    return 'cancelled'
+  }
+
+  return null
+}
+
 router.get('/admin/leads', requireAdminToken, async (req, res) => {
   const limit = Math.min(Number.parseInt(req.query.limit ?? '50', 10) || 50, 200)
   const offset = Math.max(Number.parseInt(req.query.offset ?? '0', 10) || 0, 0)
   const filters = buildLeadFilters(req.query)
 
   try {
+    await ensureLeadStatusSchema()
+
     const [leadsResult, totalResult] = await Promise.all([
       pool.query(
         `
-        SELECT id, full_name, email, domain, language_level, source, recommended_agent, created_at
+        SELECT id, full_name, email, domain, language_level, source, recommended_agent, status, status_updated_at, created_at
         FROM leads
         ${filters.whereSql}
         ORDER BY created_at DESC
@@ -93,6 +138,8 @@ router.get('/admin/leads', requireAdminToken, async (req, res) => {
       languageLevel: row.language_level,
       source: row.source,
       recommendedAgent: row.recommended_agent,
+      status: row.status,
+      statusUpdatedAt: row.status_updated_at,
       createdAt: row.created_at,
     }))
 
@@ -111,9 +158,11 @@ router.get('/admin/leads/export.csv', requireAdminToken, async (req, res) => {
   const filters = buildLeadFilters(req.query)
 
   try {
+    await ensureLeadStatusSchema()
+
     const result = await pool.query(
       `
-      SELECT id, full_name, email, domain, language_level, source, recommended_agent, created_at
+      SELECT id, full_name, email, domain, language_level, source, recommended_agent, status, status_updated_at, created_at
       FROM leads
       ${filters.whereSql}
       ORDER BY created_at DESC
@@ -121,7 +170,7 @@ router.get('/admin/leads/export.csv', requireAdminToken, async (req, res) => {
       filters.values,
     )
 
-    const header = ['id', 'full_name', 'email', 'domain', 'language_level', 'source', 'recommended_agent', 'created_at']
+    const header = ['id', 'full_name', 'email', 'domain', 'language_level', 'source', 'recommended_agent', 'status', 'status_updated_at', 'created_at']
     const lines = [header.join(',')]
 
     for (const row of result.rows) {
@@ -134,6 +183,8 @@ router.get('/admin/leads/export.csv', requireAdminToken, async (req, res) => {
           row.language_level,
           row.source,
           row.recommended_agent,
+          row.status,
+          row.status_updated_at,
           row.created_at,
         ]
           .map(escapeCsvValue)
@@ -183,6 +234,78 @@ router.get('/admin/analytics-summary', requireAdminToken, async (_req, res) => {
   } catch (error) {
     console.error('Failed to load analytics summary:', error)
     return res.status(500).json({ error: 'Server error while loading analytics summary' })
+  }
+})
+
+router.get('/admin/leads-summary', requireAdminToken, async (_req, res) => {
+  try {
+    await ensureLeadStatusSchema()
+
+    const result = await pool.query(
+      `
+      SELECT
+        COUNT(*)::int AS total,
+        COUNT(*) FILTER (WHERE status = 'pending')::int AS pending,
+        COUNT(*) FILTER (WHERE status = 'validated')::int AS validated,
+        COUNT(*) FILTER (WHERE status = 'cancelled')::int AS cancelled
+      FROM leads
+      `,
+    )
+
+    const row = result.rows[0] || { total: 0, pending: 0, validated: 0, cancelled: 0 }
+
+    return res.json({
+      total: row.total,
+      pending: row.pending,
+      validated: row.validated,
+      cancelled: row.cancelled,
+    })
+  } catch (error) {
+    console.error('Failed to load leads summary:', error)
+    return res.status(500).json({ error: 'Server error while loading leads summary' })
+  }
+})
+
+router.patch('/admin/leads/:id/status', requireAdminToken, async (req, res) => {
+  const id = Number.parseInt(req.params.id, 10)
+  const nextStatus = normalizeStatus(req.body?.status)
+
+  if (Number.isNaN(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid lead id' })
+  }
+
+  if (!nextStatus) {
+    return res.status(400).json({ error: 'Invalid lead status' })
+  }
+
+  try {
+    await ensureLeadStatusSchema()
+
+    const result = await pool.query(
+      `
+      UPDATE leads
+      SET status = $1, status_updated_at = NOW()
+      WHERE id = $2
+      RETURNING id, status, status_updated_at
+      `,
+      [nextStatus, id],
+    )
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Lead not found' })
+    }
+
+    return res.json({
+      message: 'Lead status updated',
+      lead: {
+        id: result.rows[0].id,
+        status: result.rows[0].status,
+        statusUpdatedAt: result.rows[0].status_updated_at,
+      },
+    })
+  } catch (error) {
+    console.error('Failed to update lead status:', error)
+    return res.status(500).json({ error: 'Server error while updating lead status' })
   }
 })
 

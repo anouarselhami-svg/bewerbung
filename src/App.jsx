@@ -34,7 +34,6 @@ const Animated = motion
 
 const WHATSAPP_RECIPIENTS = ['212602910235', '212664879503']
 const WHATSAPP_ROUTING_KEY = 'whatsapp-routing-index'
-const DEFAULT_SITE_ORIGIN = 'https://testservice-mu.vercel.app'
 
 const resolveApiBaseUrl = () => {
   const envBase = import.meta.env.VITE_API_BASE_URL?.trim()
@@ -53,11 +52,7 @@ const resolveApiBaseUrl = () => {
     return ''
   }
 
-  if (host.includes('translate.goog') || host.includes('translate.google')) {
-    return DEFAULT_SITE_ORIGIN
-  }
-
-  return DEFAULT_SITE_ORIGIN
+  return 'https://testservice-mu.vercel.app'
 }
 
 const API_BASE_URL = resolveApiBaseUrl()
@@ -326,7 +321,6 @@ const stats = [
 ]
 
 const servicesPlaceholderImage = '/services-placeholder.svg'
-const sitePublicUrl = 'https://service-deutschland.vercel.app/'
 const siteQrImage = '/qr-service-for-deutschland.png'
 const languageLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const supportEmail = 'baloua96@hotmail.fr'
@@ -361,7 +355,18 @@ const advanceApplicationMember = () => {
   window.localStorage.setItem(applicationRoutingKey, String(nextIndex))
 }
 
-const createRegistrationMessage = ({ name, email, domain, level }) => {
+const createRegistrationMessage = ({ name, email, domain, level, language = 'fr' }) => {
+  if (language === 'ar') {
+    return [
+      'مرحبا، أريد التسجيل في الخدمة.',
+      `الاسم: ${name || 'غير محدد'}`,
+      `البريد الإلكتروني: ${email || 'غير محدد'}`,
+      `المجال المختار: ${domain}`,
+      `مستوى اللغة: ${level}`,
+      'أرغب في المتابعة مع مستشار.',
+    ].join('\n')
+  }
+
   return [
     'Bonjour, je veux m’inscrire au service.',
     `Nom: ${name || 'Non renseigné'}`,
@@ -380,6 +385,7 @@ const scrollToSection = (sectionId) => {
 }
 
 export default function App() {
+  const [activeLanguage, setActiveLanguage] = useState('fr')
   const [candidateName, setCandidateName] = useState('')
   const [candidateEmail, setCandidateEmail] = useState('')
   const [candidateWebsite, setCandidateWebsite] = useState('')
@@ -389,15 +395,28 @@ export default function App() {
   const [leadSubmissionSuccess, setLeadSubmissionSuccess] = useState('')
   const [leadSubmitting, setLeadSubmitting] = useState(false)
 
+  const isArabic = activeLanguage === 'ar'
+  const t = (fr, ar) => (isArabic ? ar : fr)
+
   useEffect(() => {
     trackAnalyticsEvent('page_view', 'landing')
   }, [])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return
+    }
+
+    document.documentElement.lang = isArabic ? 'ar' : 'fr'
+    document.documentElement.dir = isArabic ? 'rtl' : 'ltr'
+  }, [isArabic])
 
   const consultationMessage = createRegistrationMessage({
     name: candidateName,
     email: candidateEmail,
     domain: selectedDomain,
     level: selectedLevel,
+    language: activeLanguage,
   })
 
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -410,12 +429,12 @@ export default function App() {
     setLeadSubmissionSuccess('')
 
     if (trimmedName.length < 2) {
-      setLeadSubmissionError('Veuillez saisir votre nom complet (minimum 2 caracteres).')
+      setLeadSubmissionError(t('Veuillez saisir votre nom complet (minimum 2 caracteres).', 'يرجى كتابة الاسم الكامل (على الأقل حرفان).'))
       return false
     }
 
     if (!isValidEmail(trimmedEmail)) {
-      setLeadSubmissionError('Veuillez saisir un email valide.')
+      setLeadSubmissionError(t('Veuillez saisir un email valide.', 'يرجى إدخال بريد إلكتروني صالح.'))
       return false
     }
 
@@ -447,21 +466,29 @@ export default function App() {
         const payload = await response.json().catch(() => null)
         const apiError = payload?.error
 
-        if (apiError === 'Suspicious submission blocked by anti-spam check') {
-          throw new Error('Soumission bloquee par anti-spam. Videz les champs auto-remplis puis reessayez.')
+        if (response.status === 409) {
+          throw new Error(t('Cet email a deja postule. Utilisez un autre email.', 'هذا البريد الإلكتروني سبق أن تقدم. استخدم بريدا إلكترونيا آخر.'))
         }
 
-        throw new Error(apiError || 'Impossible d\'enregistrer votre demande pour le moment.')
+        if (apiError === 'Suspicious submission blocked by anti-spam check' || apiError === 'Soumission bloquee par la protection anti-spam') {
+          throw new Error(t('Soumission bloquee par anti-spam. Videz les champs auto-remplis puis reessayez.', 'تم حظر الإرسال بواسطة نظام مكافحة السبام. احذف الحقول المعبأة تلقائيا ثم حاول مرة أخرى.'))
+        }
+
+        if (apiError === 'This email has already been used for an application' || apiError === 'Cet email a deja postule') {
+          throw new Error(t('Cet email a deja postule. Utilisez un autre email.', 'هذا البريد الإلكتروني سبق أن تقدم. استخدم بريدا إلكترونيا آخر.'))
+        }
+
+        throw new Error(apiError || t('Impossible d\'enregistrer votre demande pour le moment.', 'لا يمكن تسجيل طلبك حاليا.'))
       }
 
-      setLeadSubmissionSuccess('Votre demande a bien ete enregistree.')
+      setLeadSubmissionSuccess(t('Votre demande a bien ete enregistree.', 'تم تسجيل طلبك بنجاح.'))
       await trackAnalyticsEvent('lead_submit_success', source, {
         domain: selectedDomain,
         languageLevel: selectedLevel,
       })
       return true
     } catch (error) {
-      setLeadSubmissionError(error instanceof Error ? error.message : 'Erreur reseau, veuillez reessayer.')
+      setLeadSubmissionError(error instanceof Error ? error.message : t('Erreur reseau, veuillez reessayer.', 'خطأ في الشبكة، يرجى المحاولة مرة أخرى.'))
       return false
     } finally {
       setLeadSubmitting(false)
@@ -486,7 +513,9 @@ export default function App() {
     })
 
     const applicationLink = `https://wa.me/${activeMember.phone}?text=${encodeURIComponent(
-      `${consultationMessage}\n\nCanal choisi: WhatsApp\nConseiller assigne: ${activeMember.name} (+${activeMember.phone})\nMerci de me contacter pour finaliser ma candidature.`,
+      isArabic
+        ? `${consultationMessage}\n\nالقناة المختارة: واتساب\nالمستشار المعين: ${activeMember.name} (+${activeMember.phone})\nيرجى التواصل معي لإكمال طلبي.`
+        : `${consultationMessage}\n\nCanal choisi: WhatsApp\nConseiller assigne: ${activeMember.name} (+${activeMember.phone})\nMerci de me contacter pour finaliser ma candidature.`,
     )}`
 
     advanceApplicationMember()
@@ -510,9 +539,11 @@ export default function App() {
       languageLevel: selectedLevel,
     })
 
-    const emailSubject = encodeURIComponent('Nouvelle candidature - Service Carriere Allemagne')
+    const emailSubject = encodeURIComponent(t('Nouvelle candidature - Service Carriere Allemagne', 'طلب جديد - خدمة المسار المهني ألمانيا'))
     const emailBody = encodeURIComponent(
-      `${consultationMessage}\n\nCanal choisi: Email\nConseiller assigne: ${activeMember.name} (+${activeMember.phone})`,
+      isArabic
+        ? `${consultationMessage}\n\nالقناة المختارة: البريد الإلكتروني\nالمستشار المعين: ${activeMember.name} (+${activeMember.phone})`
+        : `${consultationMessage}\n\nCanal choisi: Email\nConseiller assigne: ${activeMember.name} (+${activeMember.phone})`,
     )
     const emailLink = `mailto:${supportEmail}?subject=${emailSubject}&body=${emailBody}`
 
@@ -521,14 +552,8 @@ export default function App() {
   }
 
 
-  const handleTranslateToArabic = () => {
-    const currentUrl = typeof window !== 'undefined' ? window.location.href : sitePublicUrl
-    const translateUrl = `https://translate.google.com/translate?sl=auto&tl=ar&u=${encodeURIComponent(currentUrl)}`
-    window.location.href = translateUrl
-  }
-
   return (
-    <div className="page-shell">
+    <div className="page-shell" dir={isArabic ? 'rtl' : 'ltr'}>
       <section className="hero-section">
         <div className="hero-glow" />
         <div className="hero-glow hero-glow-alt" />
@@ -538,31 +563,42 @@ export default function App() {
             <div className="brand-mark"><Briefcase className="icon-sm" /></div>
             <div>
               <p className="brand-title">Service Carrière Allemagne</p>
-              <p className="brand-subtitle">Emploi • Ausbildung • Aide à la candidature</p>
+              <p className="brand-subtitle">{t('Emploi • Ausbildung • Aide à la candidature', 'وظيفة • تدريب مهني • دعم التقديم')}</p>
             </div>
           </div>
 
           <div className="topbar-actions">
-            <p className="topbar-note">Accompagnement professionnel pour candidater en Allemagne</p>
+            <p className="topbar-note">{t('Accompagnement professionnel pour candidater en Allemagne', 'مرافقة مهنية للتقديم في ألمانيا')}</p>
             <Button
               type="button"
               size="sm"
-              className="translate-button"
-              onClick={handleTranslateToArabic}
-              aria-label="Traduire le site en arabe"
+              className={`translate-button ${activeLanguage === 'fr' ? 'translate-button-active' : ''}`}
+              onClick={() => setActiveLanguage('fr')}
+              aria-label="Afficher le site en français"
+              aria-pressed={activeLanguage === 'fr'}
             >
-              <Globe className="icon-xs" /> Traduire en arabe
+              <Globe className="icon-xs" /> FR
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className={`translate-button ${activeLanguage === 'ar' ? 'translate-button-active' : ''}`}
+              onClick={() => setActiveLanguage('ar')}
+              aria-label="Afficher le site en arabe"
+              aria-pressed={activeLanguage === 'ar'}
+            >
+              <Globe className="icon-xs" /> AR
             </Button>
           </div>
         </header>
 
         <div className="hero-grid">
           <Animated.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }} className="hero-copy">
-            <div className="eyebrow"><Sparkles className="icon-xs" /> Accompagnement complet pour travailler ou se former en Allemagne</div>
+            <div className="eyebrow"><Sparkles className="icon-xs" /> {t('Accompagnement complet pour travailler ou se former en Allemagne', 'مرافقة كاملة للعمل أو التكوين في ألمانيا')}</div>
 
-            <h1>Construisez votre chemin vers un <span>emploi</span> ou une <span className="blue">Ausbildung</span> en Allemagne.</h1>
+            <h1>{t('Construisez votre chemin vers un ', 'ابنِ طريقك نحو ')}<span>{t('emploi', 'وظيفة')}</span>{t(' ou une ', ' أو ')}<span className="blue">Ausbildung</span>{t(' en Allemagne.', ' في ألمانيا.')}</h1>
 
-            <p className="hero-text">Nous collectons des emails d’entreprises, traduisons vos dossiers et vous conseillons pour candidater plus vite.</p>
+            <p className="hero-text">{t('Nous collectons des emails d’entreprises, traduisons vos dossiers et vous conseillons pour candidater plus vite.', 'نجمع لك عناوين بريد الشركات، نترجم ملفاتك، ونرشدك للتقديم بشكل أسرع.')}</p>
 
             <div className="hero-actions">
               <Button
@@ -571,7 +607,7 @@ export default function App() {
                 onClick={() => scrollToSection('contact')}
                 aria-label="Aller au formulaire de contact"
               >
-                Commencer ma candidature <ArrowRight className="icon-xs ml-2" />
+                {t('Commencer ma candidature', 'ابدأ طلبي الآن')} <ArrowRight className="icon-xs ml-2" />
               </Button>
               <Button
                 size="lg"
@@ -580,7 +616,7 @@ export default function App() {
                 onClick={() => scrollToSection('services-list')}
                 aria-label="Voir la section des services"
               >
-                Voir les services
+                {t('Voir les services', 'عرض الخدمات')}
               </Button>
             </div>
 
@@ -745,8 +781,8 @@ export default function App() {
           <CardContent className="cta-content card-content">
             <div>
               <p className="section-kicker">Commencer</p>
-              <h2>Prêt à commencer ?</h2>
-              <p>Envoyez votre profil, on vous répond rapidement.</p>
+              <h2>{t('Prêt à commencer ?', 'جاهز للبدء؟')}</h2>
+              <p>{t('Envoyez votre profil, on vous répond rapidement.', 'أرسل ملفك وسنرد عليك بسرعة.')}</p>
               <div className="cta-meta">
                 <a
                   className="meta-item"
@@ -762,7 +798,7 @@ export default function App() {
                   <Phone className="icon-xs" /> WhatsApp: {whatsappNumbersFormatted}
                 </a>
                 <a className="meta-item" href={`mailto:${supportEmail}`} aria-label="Contacter le support par email">
-                  <Mail className="icon-xs" /> Suivi par email
+                  <Mail className="icon-xs" /> {t('Suivi par email', 'المتابعة عبر البريد الإلكتروني')}
                 </a>
               </div>
             </div>
@@ -784,12 +820,12 @@ export default function App() {
               </div>
 
               <Input
-                placeholder="Votre nom complet"
+                placeholder={t('Votre nom complet', 'الاسم الكامل')}
                 value={candidateName}
                 onChange={(event) => setCandidateName(event.target.value)}
               />
               <Input
-                placeholder="Votre email"
+                placeholder={t('Votre email', 'بريدك الإلكتروني')}
                 type="email"
                 value={candidateEmail}
                 onChange={(event) => setCandidateEmail(event.target.value)}
@@ -809,7 +845,7 @@ export default function App() {
               </select>
 
               <fieldset className="language-level">
-                <legend>Niveau de langue (allemand)</legend>
+                <legend>{t('Niveau de langue (allemand)', 'مستوى اللغة (الألمانية)')}</legend>
                 <div className="language-level-options">
                   {languageLevels.map((level) => (
                     <label key={level} className="language-level-chip">
@@ -826,7 +862,7 @@ export default function App() {
                 </div>
               </fieldset>
 
-              <p className="cta-choice-label">Choisissez votre mode de candidature</p>
+              <p className="cta-choice-label">{t('Choisissez votre mode de candidature', 'اختر طريقة التقديم')}</p>
               {leadSubmissionError && <p className="lead-feedback lead-feedback-error">{leadSubmissionError}</p>}
               {leadSubmissionSuccess && (
                 <p className="lead-feedback lead-feedback-success" role="status" aria-live="polite">
@@ -836,10 +872,10 @@ export default function App() {
               )}
               <div className="cta-choice-buttons">
                 <Button className="cta-button" type="button" onClick={handleApplyWhatsApp} disabled={leadSubmitting}>
-                  {leadSubmitting ? 'Enregistrement...' : 'Postuler via WhatsApp'} <Phone className="icon-xs ml-2" />
+                  {leadSubmitting ? t('Enregistrement...', 'جار الحفظ...') : t('Postuler via WhatsApp', 'التقديم عبر واتساب')} <Phone className="icon-xs ml-2" />
                 </Button>
                 <Button className="cta-button" type="button" variant="outline" onClick={handleApplyEmail} disabled={leadSubmitting}>
-                  {leadSubmitting ? 'Enregistrement...' : 'Postuler par email'} <Mail className="icon-xs ml-2" />
+                  {leadSubmitting ? t('Enregistrement...', 'جار الحفظ...') : t('Postuler par email', 'التقديم بالبريد الإلكتروني')} <Mail className="icon-xs ml-2" />
                 </Button>
               </div>
             </div>
