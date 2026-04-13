@@ -277,8 +277,11 @@ const openRotatingWhatsAppLink = (text) => {
   window.open(link, '_blank', 'noopener,noreferrer')
 }
 
-const createWhatsAppLink = (branchTitle) => {
-  const text = `Bonjour, je veux plus d'informations sur la filière ${branchTitle} en Allemagne.`
+const createWhatsAppLink = (branchTitle, language = 'fr') => {
+  const text =
+    language === 'ar'
+      ? `مرحبا، أريد مزيدا من المعلومات حول تخصص ${branchTitle} في ألمانيا.`
+      : `Bonjour, je veux plus d'informations sur la filière ${branchTitle} en Allemagne.`
   return buildWhatsAppLink(getNextWhatsAppRecipient(), text)
 }
 
@@ -319,6 +322,63 @@ const stats = [
   { value: 'Offres', label: 'Recherche ciblée' },
   { value: 'Emails', label: 'Organisation des contacts RH' },
 ]
+
+const AR_TEXT_MAP = {
+  'Soins infirmiers / aide soignant': 'التمريض / مساعد تمريض',
+  'Cuisine / restauration': 'الطبخ / المطاعم',
+  'Mécanique automobile et industrielle': 'الميكانيك السياراتي والصناعي',
+  'Mécatronique': 'الميكاترونيك',
+  'Électricité bâtiment / industrie': 'كهرباء المباني / الصناعة',
+  'Logistique / entrepôt': 'اللوجستيك / المستودعات',
+  'Vente / magasin': 'البيع / المتجر',
+  'Hôtellerie': 'الفندقة',
+  'Service / restaurant': 'الخدمة / المطعم',
+  'Soins aux personnes âgées': 'رعاية كبار السن',
+  'Maintenance automobile': 'صيانة السيارات',
+  'Support informatique': 'الدعم المعلوماتي',
+  "Collecte d'emails d'entreprises": 'جمع عناوين بريد الشركات',
+  'Nous trouvons les emails RH utiles selon votre profil.': 'نبحث لك عن عناوين بريد الموارد البشرية المناسبة لملفك.',
+  'Envoi des contacts aux clients': 'إرسال جهات الاتصال للعميل',
+  'Nous vous envoyons une liste claire d’emails d’entreprises.': 'نرسل لك قائمة واضحة بعناوين بريد الشركات.',
+  'Traduction des dossiers': 'ترجمة الملفات',
+  'Nous traduisons CV, lettres et documents essentiels.': 'نترجم السيرة الذاتية والرسائل والوثائق الأساسية.',
+  'Informations et consultations': 'معلومات واستشارات',
+  'Nous donnons des infos pratiques et des consultations rapides.': 'نقدم معلومات عملية واستشارات سريعة.',
+  'Conseils de candidature': 'نصائح التقديم',
+  'Nous vous guidons pour mieux contacter les entreprises.': 'نرشدك للتواصل مع الشركات بشكل أفضل.',
+  'Analyse du besoin': 'تحليل الحاجة',
+  'On définit votre profil et votre cible.': 'نحدد ملفك والجهة المستهدفة.',
+  'Collecte des emails': 'جمع العناوين الإلكترونية',
+  'On prépare les contacts RH utiles.': 'نجهز جهات اتصال الموارد البشرية المناسبة.',
+  'Traduction du dossier': 'ترجمة الملف',
+  'On traduit les documents importants.': 'نترجم الوثائق المهمة.',
+  'Consultation et orientation': 'الاستشارة والتوجيه',
+  'On vous guide pour les prochaines étapes.': 'نرشدك للخطوات القادمة.',
+  'Emails d’entreprises ciblés': 'عناوين بريد شركات مستهدفة',
+  'Contacts envoyés rapidement': 'إرسال جهات الاتصال بسرعة',
+  'Traduction des dossiers de candidature': 'ترجمة ملفات التقديم',
+  'Infos pratiques utiles': 'معلومات عملية مفيدة',
+  'Consultations personnalisées': 'استشارات مخصصة',
+  'Accompagnement simple': 'مرافقة بسيطة',
+  'À qui s’adresse ce service ?': 'لمن هذه الخدمة؟',
+  'À toute personne qui veut candidater en Allemagne.': 'لكل شخص يريد التقديم في ألمانيا.',
+  'Est-ce que vous gérez le visa ?': 'هل تتكفلون بالفيزا؟',
+  'Non, nous ne gérons pas le visa.': 'لا، نحن لا نتكفل بالفيزا.',
+  'Vous faites quoi exactement ?': 'ماذا تقدمون بالضبط؟',
+  'Emails d’entreprises, traduction de dossier, infos et consultations.': 'عناوين بريد الشركات، ترجمة الملفات، معلومات واستشارات.',
+  'Vous aidez si mon allemand est faible ?': 'هل تساعدونني إذا كان مستواي ضعيفا في الألمانية؟',
+  'Oui, nous adaptons les documents à votre niveau.': 'نعم، نكيف الوثائق حسب مستواك.',
+  'Préparé professionnellement': 'معد باحتراف',
+  'Accompagnement dossier complet': 'مرافقة ملف كامل',
+  'Recherche ciblée': 'بحث موجه',
+  'Organisation des contacts RH': 'تنظيم جهات اتصال الموارد البشرية',
+  'Étudiants': 'الطلاب',
+  'Jeunes diplômés': 'الخريجون الجدد',
+  'Débutants dans les candidatures allemandes': 'المبتدئون في التقديم لألمانيا',
+  'Candidats en Ausbildung': 'مترشحو التكوين المهني',
+  'Personnes qui veulent partir travailler en Allemagne': 'أشخاص يريدون العمل في ألمانيا',
+  'Personnes ayant besoin d’aide pour leurs documents': 'أشخاص يحتاجون مساعدة في وثائقهم',
+}
 
 const servicesPlaceholderImage = '/services-placeholder.svg'
 const siteQrImage = '/qr-service-for-deutschland.png'
@@ -397,6 +457,32 @@ export default function App() {
 
   const isArabic = activeLanguage === 'ar'
   const t = (fr, ar) => (isArabic ? ar : fr)
+  const tr = (text) => (isArabic ? AR_TEXT_MAP[text] ?? text : text)
+
+  const localizeBranchDetail = (detail) => {
+    if (!isArabic) {
+      return detail
+    }
+
+    return detail
+      .replace('Niveau requis:', 'المستوى المطلوب:')
+      .replace('Durée:', 'المدة:')
+      .replace('Ville/Région:', 'المدينة/المنطقة:')
+      .replace('Salaire moyen:', 'الراتب المتوسط:')
+      .replace('Documents nécessaires:', 'الوثائق المطلوبة:')
+      .replace('Date limite pour postuler:', 'آخر موعد للتقديم:')
+  }
+
+  const branchQuestionMessage = (branchTitle) =>
+    t(
+      `Bonjour, je veux plus d'informations sur la filière ${branchTitle} en Allemagne.`,
+      `مرحبا، أريد مزيدا من المعلومات حول تخصص ${branchTitle} في ألمانيا.`,
+    )
+
+  const generalInfoMessage = t(
+    'Bonjour, je veux des informations pour ma candidature en Allemagne.',
+    'مرحبا، أريد معلومات حول طلبي في ألمانيا.',
+  )
 
   useEffect(() => {
     trackAnalyticsEvent('page_view', 'landing')
@@ -562,7 +648,7 @@ export default function App() {
           <div className="brand">
             <div className="brand-mark"><Briefcase className="icon-sm" /></div>
             <div>
-              <p className="brand-title">Service Carrière Allemagne</p>
+              <p className="brand-title">{t('Service Carrière Allemagne', 'خدمة المسار المهني ألمانيا')}</p>
               <p className="brand-subtitle">{t('Emploi • Ausbildung • Aide à la candidature', 'وظيفة • تدريب مهني • دعم التقديم')}</p>
             </div>
           </div>
@@ -574,7 +660,7 @@ export default function App() {
               size="sm"
               className={`translate-button ${activeLanguage === 'fr' ? 'translate-button-active' : ''}`}
               onClick={() => setActiveLanguage('fr')}
-              aria-label="Afficher le site en français"
+              aria-label={t('Afficher le site en français', 'عرض الموقع بالفرنسية')}
               aria-pressed={activeLanguage === 'fr'}
             >
               <Globe className="icon-xs" /> FR
@@ -584,7 +670,7 @@ export default function App() {
               size="sm"
               className={`translate-button ${activeLanguage === 'ar' ? 'translate-button-active' : ''}`}
               onClick={() => setActiveLanguage('ar')}
-              aria-label="Afficher le site en arabe"
+              aria-label={t('Afficher le site en arabe', 'عرض الموقع بالعربية')}
               aria-pressed={activeLanguage === 'ar'}
             >
               <Globe className="icon-xs" /> AR
@@ -605,7 +691,7 @@ export default function App() {
                 size="lg"
                 className="rounded-2xl px-6 text-base"
                 onClick={() => scrollToSection('contact')}
-                aria-label="Aller au formulaire de contact"
+                aria-label={t('Aller au formulaire de contact', 'الذهاب إلى نموذج التواصل')}
               >
                 {t('Commencer ma candidature', 'ابدأ طلبي الآن')} <ArrowRight className="icon-xs ml-2" />
               </Button>
@@ -614,7 +700,7 @@ export default function App() {
                 variant="outline"
                 className="rounded-2xl border-white/20 bg-white/5 px-6 text-base text-white hover:bg-white/10"
                 onClick={() => scrollToSection('services-list')}
-                aria-label="Voir la section des services"
+                aria-label={t('Voir la section des services', 'عرض قسم الخدمات')}
               >
                 {t('Voir les services', 'عرض الخدمات')}
               </Button>
@@ -622,7 +708,7 @@ export default function App() {
 
             <div className="highlight-grid">
               {highlights.slice(0, 4).map((item) => (
-                <div key={item} className="info-card"><CheckCircle2 className="icon-sm success" /><p>{item}</p></div>
+                <div key={item} className="info-card"><CheckCircle2 className="icon-sm success" /><p>{tr(item)}</p></div>
               ))}
             </div>
           </Animated.div>
@@ -630,7 +716,7 @@ export default function App() {
           <Animated.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="hero-panel">
             <div className="stats-grid">
               {stats.map((stat) => (
-                <Card key={stat.label} className="glass-card stat-card"><CardContent className="card-content"><p className="stat-value">{stat.value}</p><p className="stat-label">{stat.label}</p></CardContent></Card>
+                <Card key={stat.label} className="glass-card stat-card"><CardContent className="card-content"><p className="stat-value">{stat.value}</p><p className="stat-label">{tr(stat.label)}</p></CardContent></Card>
               ))}
             </div>
           </Animated.div>
@@ -639,27 +725,27 @@ export default function App() {
 
       <section className="content-section video-section" id="video">
         <div className="section-intro narrow">
-          <p className="section-kicker">Aperçu des services</p>
-          <h2>Image de présentation des services</h2>
-          <p>La vidéo est temporairement désactivée. Voici le visuel des services.</p>
+          <p className="section-kicker">{t('Aperçu des services', 'نظرة على الخدمات')}</p>
+          <h2>{t('Image de présentation des services', 'صورة تقديمية للخدمات')}</h2>
+          <p>{t('La vidéo est temporairement désactivée. Voici le visuel des services.', 'الفيديو متوقف مؤقتا. إليك الصورة التوضيحية للخدمات.')}</p>
         </div>
 
         <div className="video-frame">
-          <img className="promo-video" src={servicesPlaceholderImage} alt="Visuel temporaire présentant nos services" loading="lazy" />
+          <img className="promo-video" src={servicesPlaceholderImage} alt={t('Visuel temporaire présentant nos services', 'صورة مؤقتة تعرض خدماتنا')} loading="lazy" />
 
           <div className="video-overlay">
             <div className="video-badge">
               <Sparkles className="icon-xs" />
-              Aperçu des services
+              {t('Aperçu des services', 'نظرة على الخدمات')}
             </div>
 
             <div className="video-overlay-copy">
-              <h3>Nos services clés en un coup d’oeil</h3>
-              <p>Collecte d’emails, traduction des dossiers et accompagnement candidature.</p>
+              <h3>{t('Nos services clés en un coup d’oeil', 'خدماتنا الأساسية في نظرة سريعة')}</h3>
+              <p>{t('Collecte d’emails, traduction des dossiers et accompagnement candidature.', 'جمع العناوين الإلكترونية، ترجمة الملفات ومرافقة التقديم.')}</p>
             </div>
 
             <a className="ui-button button-default button-md video-cta" href="#services-list">
-              Voir nos services
+              {t('Voir nos services', 'عرض خدماتنا')}
             </a>
           </div>
         </div>
@@ -667,9 +753,9 @@ export default function App() {
 
       <section className="content-section" id="services-list">
         <div className="section-intro">
-          <p className="section-kicker">Choisissez une filière</p>
-          <h2>Cliquez sur une branche et posez-nous vos questions directement sur WhatsApp</h2>
-          <p>Choisissez une filière et posez vos questions directement sur WhatsApp.</p>
+          <p className="section-kicker">{t('Choisissez une filière', 'اختر تخصصا')}</p>
+          <h2>{t('Cliquez sur une branche et posez-nous vos questions directement sur WhatsApp', 'اضغط على التخصص واطرح أسئلتك مباشرة عبر واتساب')}</h2>
+          <p>{t('Choisissez une filière et posez vos questions directement sur WhatsApp.', 'اختر تخصصا واطرح أسئلتك مباشرة على واتساب.')}</p>
         </div>
 
         <div className="branch-grid">
@@ -678,7 +764,7 @@ export default function App() {
             return (
               <Animated.a
                 key={branch.title}
-                href={createWhatsAppLink(branch.title)}
+                href={createWhatsAppLink(branch.title, activeLanguage)}
                 target="_blank"
                 rel="noreferrer"
                 initial={{ opacity: 0, y: 18 }}
@@ -688,23 +774,23 @@ export default function App() {
                 className="branch-link"
                 onClick={(event) => {
                   event.preventDefault()
-                  openRotatingWhatsAppLink(`Bonjour, je veux plus d'informations sur la filière ${branch.title} en Allemagne.`)
+                  openRotatingWhatsAppLink(branchQuestionMessage(branch.title))
                 }}
               >
                 <Card className="glass-card branch-card">
                   <CardContent className="card-content">
                     <div className="branch-icon-wrap"><Icon className="icon-md success-text" /></div>
                     <h3>{branch.title}</h3>
-                    <p>{branch.subtitle}</p>
+                    <p>{tr(branch.subtitle)}</p>
                     <ul className="branch-details">
                       {branch.details.map((detail) => (
                         <li key={detail} className="branch-detail-item">
                           <AlertCircle className="icon-xs" />
-                          <span>{detail}</span>
+                          <span>{localizeBranchDetail(detail)}</span>
                         </li>
                       ))}
                     </ul>
-                    <div className="pill-link">Poser une question sur WhatsApp <ArrowRight className="icon-xs" /></div>
+                    <div className="pill-link">{t('Poser une question sur WhatsApp', 'اطرح سؤالك على واتساب')} <ArrowRight className="icon-xs" /></div>
                   </CardContent>
                 </Card>
               </Animated.a>
@@ -715,9 +801,9 @@ export default function App() {
 
       <section className="content-section">
         <div className="section-intro narrow">
-          <p className="section-kicker">Nos services</p>
-          <h2>Nos services essentiels</h2>
-          <p>Tout le nécessaire pour candidater simplement.</p>
+          <p className="section-kicker">{t('Nos services', 'خدماتنا')}</p>
+          <h2>{t('Nos services essentiels', 'خدماتنا الأساسية')}</h2>
+          <p>{t('Tout le nécessaire pour candidater simplement.', 'كل ما تحتاجه للتقديم بسهولة.')}</p>
         </div>
 
         <div className="service-grid">
@@ -728,8 +814,8 @@ export default function App() {
                 <Card className="glass-card service-card">
                   <CardContent className="card-content">
                     <div className="service-icon-wrap"><Icon className="icon-sm success-text" /></div>
-                    <h3>{service.title}</h3>
-                    <p>{service.description}</p>
+                    <h3>{tr(service.title)}</h3>
+                    <p>{tr(service.description)}</p>
                   </CardContent>
                 </Card>
               </Animated.div>
@@ -741,37 +827,37 @@ export default function App() {
       <section className="split-section">
         <div className="split-wrap">
           <div className="split-copy">
-            <p className="section-kicker blue-kicker">Comment ça marche</p>
-            <h2>Processus simple en 4 étapes</h2>
-            <p>Clair, rapide et pratique.</p>
+            <p className="section-kicker blue-kicker">{t('Comment ça marche', 'كيف يعمل')}</p>
+            <h2>{t('Processus simple en 4 étapes', 'عملية بسيطة في 4 خطوات')}</h2>
+            <p>{t('Clair, rapide et pratique.', 'واضح وسريع وعملي.')}</p>
 
             <div className="step-list">
               {steps.map((step) => (
                 <div key={step.number} className="step-card">
                   <div className="step-number">{step.number}</div>
-                  <div><h3>{step.title}</h3><p>{step.text}</p></div>
+                  <div><h3>{tr(step.title)}</h3><p>{tr(step.text)}</p></div>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="split-side">
-            <Card className="glass-card side-card"><CardContent className="card-content"><h3>Pourquoi les clients choisissent ce service</h3><div className="check-list large">{highlights.map((item) => (<div key={item} className="check-row"><CheckCircle2 className="icon-sm success" /><p>{item}</p></div>))}</div></CardContent></Card>
-            <Card className="glass-card side-card alt-card"><CardContent className="card-content"><h3>Idéal pour</h3><div className="tag-grid">{['Étudiants', 'Jeunes diplômés', 'Débutants dans les candidatures allemandes', 'Candidats en Ausbildung', 'Personnes qui veulent partir travailler en Allemagne', 'Personnes ayant besoin d’aide pour leurs documents'].map((group) => (<div key={group} className="tag-item">{group}</div>))}</div></CardContent></Card>
+            <Card className="glass-card side-card"><CardContent className="card-content"><h3>{t('Pourquoi les clients choisissent ce service', 'لماذا يختار العملاء هذه الخدمة')}</h3><div className="check-list large">{highlights.map((item) => (<div key={item} className="check-row"><CheckCircle2 className="icon-sm success" /><p>{tr(item)}</p></div>))}</div></CardContent></Card>
+            <Card className="glass-card side-card alt-card"><CardContent className="card-content"><h3>{t('Idéal pour', 'مناسب لـ')}</h3><div className="tag-grid">{['Étudiants', 'Jeunes diplômés', 'Débutants dans les candidatures allemandes', 'Candidats en Ausbildung', 'Personnes qui veulent partir travailler en Allemagne', 'Personnes ayant besoin d’aide pour leurs documents'].map((group) => (<div key={group} className="tag-item">{tr(group)}</div>))}</div></CardContent></Card>
           </div>
         </div>
       </section>
 
       <section className="content-section faq-section">
         <div className="section-intro narrow">
-          <p className="section-kicker">FAQ</p>
-          <h2>Questions fréquentes</h2>
-          <p>Réponses courtes et directes.</p>
+          <p className="section-kicker">{t('FAQ', 'الأسئلة الشائعة')}</p>
+          <h2>{t('Questions fréquentes', 'الأسئلة الشائعة')}</h2>
+          <p>{t('Réponses courtes et directes.', 'أجوبة قصيرة ومباشرة.')}</p>
         </div>
 
         <div className="faq-list">
           {faq.map((item) => (
-            <details key={item.q} className="faq-item"><summary><span>{item.q}</span><span className="faq-arrow">⌄</span></summary><p>{item.a}</p></details>
+            <details key={item.q} className="faq-item"><summary><span>{tr(item.q)}</span><span className="faq-arrow">⌄</span></summary><p>{tr(item.a)}</p></details>
           ))}
         </div>
       </section>
@@ -780,24 +866,24 @@ export default function App() {
         <Card className="glass-card cta-card">
           <CardContent className="cta-content card-content">
             <div>
-              <p className="section-kicker">Commencer</p>
+              <p className="section-kicker">{t('Commencer', 'ابدأ')}</p>
               <h2>{t('Prêt à commencer ?', 'جاهز للبدء؟')}</h2>
               <p>{t('Envoyez votre profil, on vous répond rapidement.', 'أرسل ملفك وسنرد عليك بسرعة.')}</p>
               <div className="cta-meta">
                 <a
                   className="meta-item"
-                  href={buildWhatsAppLink(getNextWhatsAppRecipient(), 'Bonjour, je veux des informations pour ma candidature en Allemagne.')}
+                  href={buildWhatsAppLink(getNextWhatsAppRecipient(), generalInfoMessage)}
                   target="_blank"
                   rel="noreferrer"
-                  aria-label="Contacter le support via WhatsApp"
+                  aria-label={t('Contacter le support via WhatsApp', 'التواصل مع الدعم عبر واتساب')}
                   onClick={(event) => {
                     event.preventDefault()
-                    openRotatingWhatsAppLink('Bonjour, je veux des informations pour ma candidature en Allemagne.')
+                    openRotatingWhatsAppLink(generalInfoMessage)
                   }}
                 >
-                  <Phone className="icon-xs" /> WhatsApp: {whatsappNumbersFormatted}
+                  <Phone className="icon-xs" /> {t('WhatsApp', 'واتساب')}: {whatsappNumbersFormatted}
                 </a>
-                <a className="meta-item" href={`mailto:${supportEmail}`} aria-label="Contacter le support par email">
+                <a className="meta-item" href={`mailto:${supportEmail}`} aria-label={t('Contacter le support par email', 'التواصل مع الدعم عبر البريد الإلكتروني')}>
                   <Mail className="icon-xs" /> {t('Suivi par email', 'المتابعة عبر البريد الإلكتروني')}
                 </a>
               </div>
@@ -805,7 +891,7 @@ export default function App() {
 
             <div className="cta-form">
               <div className="honeypot-field" aria-hidden="true">
-                <label htmlFor="company-website">Site web</label>
+                <label htmlFor="company-website">{t('Site web', 'الموقع الإلكتروني')}</label>
                 <input
                   id="company-website"
                   name="company_website_hp"
@@ -835,7 +921,7 @@ export default function App() {
                 className="ui-input"
                 value={selectedDomain}
                 onChange={(event) => setSelectedDomain(event.target.value)}
-                aria-label="Choisir un domaine"
+                aria-label={t('Choisir un domaine', 'اختر المجال')}
               >
                 {branches.map((branch) => (
                   <option key={branch.title} value={branch.title}>
@@ -885,9 +971,9 @@ export default function App() {
 
       <section className="content-section footer-contact-section" id="contacts-footer">
         <div className="section-intro narrow">
-          <p className="section-kicker">Contacts</p>
-          <h2>Contacts directs + QR Code du site</h2>
-          <p>Scannez le QR code pour ouvrir le site, ou contactez directement notre equipe.</p>
+          <p className="section-kicker">{t('Contacts', 'جهات الاتصال')}</p>
+          <h2>{t('Contacts directs + QR Code du site', 'اتصال مباشر + رمز QR للموقع')}</h2>
+          <p>{t('Scannez le QR code pour ouvrir le site, ou contactez directement notre equipe.', 'امسح رمز QR لفتح الموقع، أو تواصل مباشرة مع فريقنا.')}</p>
         </div>
 
         <div className="footer-contact-grid">
@@ -895,24 +981,24 @@ export default function App() {
             <CardContent className="card-content contact-list-content">
               {teamMembers.map((member) => (
                 <div key={member.phone} className="contact-person-card">
-                  <h3>{member.name}</h3>
+                  <h3>{t(member.name, member.name.replace('Contact', 'جهة اتصال'))}</h3>
                   <p>WhatsApp: {formatWhatsAppNumber(member.phone)}</p>
                   <a
                     className="ui-button button-outline button-md"
-                    href={buildWhatsAppLink(member.phone, 'Bonjour, je veux des informations pour ma candidature en Allemagne.')}
+                    href={buildWhatsAppLink(member.phone, generalInfoMessage)}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <Phone className="icon-xs" /> Ouvrir WhatsApp
+                    <Phone className="icon-xs" /> {t('Ouvrir WhatsApp', 'فتح واتساب')}
                   </a>
                 </div>
               ))}
 
               <div className="contact-person-card">
-                <h3>Email Support</h3>
+                <h3>{t('Email Support', 'دعم البريد الإلكتروني')}</h3>
                 <p>{supportEmail}</p>
                 <a className="ui-button button-outline button-md" href={`mailto:${supportEmail}`}>
-                  <Mail className="icon-xs" /> Envoyer un email
+                  <Mail className="icon-xs" /> {t('Envoyer un email', 'إرسال بريد إلكتروني')}
                 </a>
               </div>
             </CardContent>
@@ -920,18 +1006,18 @@ export default function App() {
 
           <Card className="glass-card qr-card">
             <CardContent className="card-content qr-content">
-              <h3>QR Code du site</h3>
-              <p>Scannez ce code avec votre telephone pour ouvrir la page.</p>
-              <img className="qr-image" src={siteQrImage} alt="QR code vers service-deutschland.vercel.app" loading="lazy" />
+              <h3>{t('QR Code du site', 'رمز QR للموقع')}</h3>
+              <p>{t('Scannez ce code avec votre telephone pour ouvrir la page.', 'امسح هذا الرمز بهاتفك لفتح الصفحة.')}</p>
+              <img className="qr-image" src={siteQrImage} alt={t('QR code vers service-deutschland.vercel.app', 'رمز QR نحو service-deutschland.vercel.app')} loading="lazy" />
             </CardContent>
           </Card>
         </div>
 
         <footer className="site-footer">
-          <p>Informations legales:</p>
+          <p>{t('Informations legales:', 'معلومات قانونية:')}</p>
           <div className="site-footer-links">
             <a className="site-footer-link" href="/legal.html">
-              Mentions legales et confidentialite
+              {t('Mentions legales et confidentialite', 'الإشعارات القانونية والخصوصية')}
             </a>
           </div>
         </footer>
@@ -939,22 +1025,22 @@ export default function App() {
 
       <a
         className="mobile-whatsapp-fab"
-        href={buildWhatsAppLink(getNextWhatsAppRecipient(), 'Bonjour, je veux des informations pour ma candidature en Allemagne.')}
+        href={buildWhatsAppLink(getNextWhatsAppRecipient(), generalInfoMessage)}
         target="_blank"
         rel="noreferrer"
-        aria-label="Contacter sur WhatsApp"
+        aria-label={t('Contacter sur WhatsApp', 'التواصل عبر واتساب')}
         onClick={(event) => {
           event.preventDefault()
-          openRotatingWhatsAppLink('Bonjour, je veux des informations pour ma candidature en Allemagne.')
+          openRotatingWhatsAppLink(generalInfoMessage)
         }}
       >
         <Phone className="icon-sm" />
-        WhatsApp
+        {t('WhatsApp', 'واتساب')}
       </a>
 
-      <a className="mobile-email-fab" href={`mailto:${supportEmail}`} aria-label="Contacter par email">
+      <a className="mobile-email-fab" href={`mailto:${supportEmail}`} aria-label={t('Contacter par email', 'التواصل عبر البريد الإلكتروني')}>
         <Mail className="icon-sm" />
-        Email
+        {t('Email', 'بريد إلكتروني')}
       </a>
     </div>
   )
