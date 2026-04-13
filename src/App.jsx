@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Briefcase,
@@ -34,8 +34,6 @@ const Animated = motion
 
 const WHATSAPP_RECIPIENTS = ['212602910235', '212664879503']
 const WHATSAPP_ROUTING_KEY = 'whatsapp-routing-index'
-const COMMENT_BLOCKED_WORDS = ['insulte', 'arnaque', 'escroc', 'haine']
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 const formatWhatsAppNumber = (phoneNumber) => `+${phoneNumber.slice(0, 3)} ${phoneNumber.slice(3, 6)} ${phoneNumber.slice(6, 9)} ${phoneNumber.slice(9)}`
 
@@ -274,7 +272,7 @@ const stats = [
 ]
 
 const servicesPlaceholderImage = '/services-placeholder.svg'
-const sitePublicUrl = 'https://service-for-deutschland.netlify.app/'
+const sitePublicUrl = 'https://service-deutschland.vercel.app/'
 const siteQrImage = '/qr-service-for-deutschland.png'
 const languageLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const supportEmail = 'baloua96@hotmail.fr'
@@ -332,43 +330,6 @@ export default function App() {
   const [candidateEmail, setCandidateEmail] = useState('')
   const [selectedDomain, setSelectedDomain] = useState(branches[0].title)
   const [selectedLevel, setSelectedLevel] = useState('B1')
-  const [commentName, setCommentName] = useState('')
-  const [commentMessage, setCommentMessage] = useState('')
-  const [commentRating, setCommentRating] = useState(5)
-  const [commentError, setCommentError] = useState('')
-  const [commentAdminToken, setCommentAdminToken] = useState('')
-  const [comments, setComments] = useState([])
-  const [commentsLoading, setCommentsLoading] = useState(true)
-  const [commentsRequestError, setCommentsRequestError] = useState('')
-
-  useEffect(() => {
-    const loadComments = async () => {
-      setCommentsLoading(true)
-      setCommentsRequestError('')
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/comments?limit=20`)
-        if (!response.ok) {
-          throw new Error('Impossible de charger les commentaires')
-        }
-
-        const payload = await response.json()
-        const nextComments = Array.isArray(payload.comments) ? payload.comments : []
-        setComments(nextComments.map((comment) => ({ ...comment, rating: Number(comment.rating) || 5 })))
-      } catch {
-        setCommentsRequestError('Impossible de charger les commentaires pour le moment.')
-      } finally {
-        setCommentsLoading(false)
-      }
-    }
-
-    loadComments()
-  }, [])
-
-  const containsBlockedWord = (text) => {
-    const normalized = text.toLowerCase()
-    return COMMENT_BLOCKED_WORDS.some((word) => normalized.includes(word))
-  }
 
   const consultationMessage = createRegistrationMessage({
     name: candidateName,
@@ -399,73 +360,11 @@ export default function App() {
     window.location.href = emailLink
   }
 
-  const handleSendComment = async () => {
-    setCommentError('')
-    const trimmedMessage = commentMessage.trim()
-    if (!trimmedMessage) {
-      setCommentError('Veuillez ecrire un commentaire.')
-      return
-    }
 
-    if (containsBlockedWord(trimmedMessage)) {
-      setCommentError('Commentaire refuse: un mot non autorise a ete detecte.')
-      return
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: commentName.trim() || 'Anonyme',
-          message: trimmedMessage,
-          rating: commentRating,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Publication echouee')
-      }
-
-      const payload = await response.json()
-      const createdComment = payload.comment
-      if (!createdComment) {
-        throw new Error('Commentaire invalide')
-      }
-
-      setComments((previousComments) => [createdComment, ...previousComments].slice(0, 20))
-      setCommentName('')
-      setCommentMessage('')
-      setCommentRating(5)
-    } catch {
-      setCommentError('Impossible de publier le commentaire pour le moment.')
-    }
-  }
-
-  const handleDeleteComment = async (commentId) => {
-    if (!commentAdminToken.trim()) {
-      setCommentError('Token admin requis pour supprimer un commentaire.')
-      return
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
-        method: 'DELETE',
-        headers: {
-          'x-admin-token': commentAdminToken.trim(),
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error('Suppression echouee')
-      }
-
-      setComments((previousComments) => previousComments.filter((comment) => comment.id !== commentId))
-    } catch {
-      setCommentError('Impossible de supprimer ce commentaire pour le moment.')
-    }
+  const handleTranslateToArabic = () => {
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : sitePublicUrl
+    const translateUrl = `https://translate.google.com/translate?sl=auto&tl=ar&u=${encodeURIComponent(currentUrl)}`
+    window.location.href = translateUrl
   }
 
   return (
@@ -482,7 +381,19 @@ export default function App() {
               <p className="brand-subtitle">Emploi • Ausbildung • Aide à la candidature</p>
             </div>
           </div>
-          <p className="topbar-note">Accompagnement professionnel pour candidater en Allemagne</p>
+
+          <div className="topbar-actions">
+            <p className="topbar-note">Accompagnement professionnel pour candidater en Allemagne</p>
+            <Button
+              type="button"
+              size="sm"
+              className="translate-button"
+              onClick={handleTranslateToArabic}
+              aria-label="Traduire le site en arabe"
+            >
+              <Globe className="icon-xs" /> Traduire en arabe
+            </Button>
+          </div>
         </header>
 
         <div className="hero-grid">
@@ -533,8 +444,8 @@ export default function App() {
       <section className="content-section video-section" id="video">
         <div className="section-intro narrow">
           <p className="section-kicker">Aperçu des services</p>
-          <h2>Image temporaire en attendant la vidéo</h2>
-          <p>Voici un visuel de nos services. La vidéo sera ajoutée dès qu’elle est prête.</p>
+          <h2>Image de présentation des services</h2>
+          <p>La vidéo est temporairement désactivée. Voici le visuel des services.</p>
         </div>
 
         <div className="video-frame">
@@ -543,7 +454,7 @@ export default function App() {
           <div className="video-overlay">
             <div className="video-badge">
               <Sparkles className="icon-xs" />
-              Présentation de notre service
+              Aperçu des services
             </div>
 
             <div className="video-overlay-copy">
@@ -667,83 +578,6 @@ export default function App() {
             <details key={item.q} className="faq-item"><summary><span>{item.q}</span><span className="faq-arrow">⌄</span></summary><p>{item.a}</p></details>
           ))}
         </div>
-      </section>
-
-      <section className="content-section comment-section">
-        <div className="section-intro narrow">
-          <p className="section-kicker">Commentaires</p>
-          <h2>Laissez un avis ou une question</h2>
-          <p>Les commentaires sont enregistres en base de donnees securisee.</p>
-        </div>
-
-        <Card className="glass-card comment-card">
-          <CardContent className="card-content comment-content">
-            <Input
-              placeholder="Token admin (suppression)"
-              type="password"
-              value={commentAdminToken}
-              onChange={(event) => setCommentAdminToken(event.target.value)}
-            />
-            <Input
-              placeholder="Votre nom"
-              value={commentName}
-              onChange={(event) => setCommentName(event.target.value)}
-            />
-            <textarea
-              className="ui-input comment-textarea"
-              placeholder="Votre commentaire"
-              value={commentMessage}
-              onChange={(event) => setCommentMessage(event.target.value)}
-            />
-            <div className="comment-rating-input" aria-label="Donner une note">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  className={`star-btn ${commentRating >= star ? 'is-active' : ''}`}
-                  onClick={() => setCommentRating(star)}
-                  aria-label={`Donner ${star} etoile${star > 1 ? 's' : ''}`}
-                >
-                  ★
-                </button>
-              ))}
-            </div>
-            {commentError && <p className="comment-error">{commentError}</p>}
-            <Button className="cta-button" type="button" onClick={handleSendComment}>
-              Publier le commentaire <ArrowRight className="icon-xs ml-2" />
-            </Button>
-          </CardContent>
-        </Card>
-
-        {commentsLoading && <p className="comment-state-text">Chargement des commentaires...</p>}
-        {commentsRequestError && <p className="comment-error">{commentsRequestError}</p>}
-        {!commentsLoading && !commentsRequestError && comments.length === 0 && (
-          <p className="comment-state-text">Aucun commentaire pour le moment.</p>
-        )}
-
-        {comments.length > 0 && (
-          <div className="comment-list">
-            {comments.map((comment) => (
-              <Card key={comment.id} className="glass-card comment-item">
-                <CardContent className="card-content">
-                  <div className="comment-item-head">
-                    <strong>{comment.name}</strong>
-                    <span>{new Date(comment.createdAt).toLocaleDateString('fr-FR')}</span>
-                  </div>
-                  <div className="comment-rating-view" aria-label={`Note: ${comment.rating} sur 5`}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span key={star} className={comment.rating >= star ? 'is-active' : ''}>★</span>
-                    ))}
-                  </div>
-                  <p>{comment.message}</p>
-                  <button className="comment-delete-btn" type="button" onClick={() => handleDeleteComment(comment.id)}>
-                    Supprimer
-                  </button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
       </section>
 
       <section className="content-section cta-section" id="contact">
@@ -870,7 +704,7 @@ export default function App() {
             <CardContent className="card-content qr-content">
               <h3>QR Code du site</h3>
               <p>Scannez ce code avec votre telephone pour ouvrir la page.</p>
-              <img className="qr-image" src={siteQrImage} alt="QR code vers Service for Deutschland" loading="lazy" />
+              <img className="qr-image" src={siteQrImage} alt="QR code vers service-deutschland.vercel.app" loading="lazy" />
             </CardContent>
           </Card>
         </div>
@@ -898,3 +732,4 @@ export default function App() {
     </div>
   )
 }
+

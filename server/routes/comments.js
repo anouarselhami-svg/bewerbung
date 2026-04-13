@@ -20,6 +20,7 @@ const containsBlockedWord = (text) => {
 
 router.get('/comments', async (req, res) => {
   const limit = Math.min(Number.parseInt(req.query.limit ?? '20', 10) || 20, 50)
+  const offset = Math.max(Number.parseInt(req.query.offset ?? '0', 10) || 0, 0)
 
   try {
     const result = await pool.query(
@@ -28,18 +29,23 @@ router.get('/comments', async (req, res) => {
       FROM comments
       ORDER BY created_at DESC
       LIMIT $1
+      OFFSET $2
       `,
-      [limit],
+      [limit + 1, offset],
     )
 
+    const rows = result.rows.slice(0, limit)
+    const hasMore = result.rows.length > limit
+
     return res.json({
-      comments: result.rows.map((row) => ({
+      comments: rows.map((row) => ({
         id: row.id,
         name: row.author_name,
         message: row.message,
         rating: row.rating,
         createdAt: row.created_at,
       })),
+      hasMore,
     })
   } catch (error) {
     console.error('Failed to fetch comments:', error)

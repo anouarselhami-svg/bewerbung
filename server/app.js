@@ -8,12 +8,19 @@ import commentsRouter from './routes/comments.js'
 import leadsRouter from './routes/leads.js'
 
 const app = express()
+const allowedOrigins = env.FRONTEND_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
 
 app.use(helmet())
 app.use(requireHttps)
 app.use(
   cors({
-    origin: env.FRONTEND_ORIGIN,
+    origin: (requestOrigin, callback) => {
+      if (!requestOrigin || allowedOrigins.includes(requestOrigin)) {
+        return callback(null, true)
+      }
+
+      return callback(new Error('Not allowed by CORS'))
+    },
     methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     credentials: false,
   }),

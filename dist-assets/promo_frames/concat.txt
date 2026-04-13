@@ -1,0 +1,11 @@
+file 'C:/Users/Anouar Selhami/test_service/dist-assets/promo_frames/slide_01.png'
+duration 8
+file 'C:/Users/Anouar Selhami/test_service/dist-assets/promo_frames/slide_02.png'
+duration 8
+file 'C:/Users/Anouar Selhami/test_service/dist-assets/promo_frames/slide_03.png'
+duration 8
+file 'C:/Users/Anouar Selhami/test_service/dist-assets/promo_frames/slide_04.png'
+duration 8
+file 'C:/Users/Anouar Selhami/test_service/dist-assets/promo_frames/slide_05.png'
+duration 8
+file 'C:/Users/Anouar Selhami/test_service/dist-assets/promo_frames/slide_05.png'
