@@ -897,9 +897,6 @@ export default function App() {
             <a className="site-footer-link" href="/legal.html">
               Mentions legales et confidentialite
             </a>
-            <a className="site-footer-link" href="/admin.html">
-              Dashboard admin
-            </a>
           </div>
         </footer>
       </section>
