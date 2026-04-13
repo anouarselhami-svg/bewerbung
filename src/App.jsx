@@ -49,11 +49,15 @@ const resolveApiBaseUrl = () => {
 
   const host = window.location.hostname.toLowerCase()
 
+  if (host.includes('localhost') || host.includes('127.0.0.1')) {
+    return ''
+  }
+
   if (host.includes('translate.goog') || host.includes('translate.google')) {
     return DEFAULT_SITE_ORIGIN
   }
 
-  return ''
+  return DEFAULT_SITE_ORIGIN
 }
 
 const API_BASE_URL = resolveApiBaseUrl()

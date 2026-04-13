@@ -414,6 +414,10 @@
           await Promise.all([loadAnalytics(), loadLeads(false)])
           setStatus('Donnees chargees avec succes.', 'ok')
         } catch (error) {
+          if (error instanceof Error && error.message.includes('Token admin invalide ou manquant')) {
+            window.localStorage.removeItem('admin-dashboard-token')
+          }
+
           setStatus(error instanceof Error ? error.message : 'Erreur inconnue', 'error')
         } finally {
           loadBtn.disabled = false
