@@ -37,13 +37,14 @@ const buildLeadFilters = (query) => {
   const search = query.search?.toString().trim()
   const domain = query.domain?.toString().trim()
   const status = query.status?.toString().trim().toLowerCase()
+  const country = query.country?.toString().trim()
   const startDate = query.startDate?.toString().trim()
   const endDate = query.endDate?.toString().trim()
 
   if (search) {
     values.push(`%${search}%`)
     const index = values.length
-    clauses.push(`(full_name ILIKE $${index} OR email ILIKE $${index} OR source ILIKE $${index})`)
+    clauses.push(`(full_name ILIKE $${index} OR email ILIKE $${index} OR source ILIKE $${index} OR array_to_string(target_countries, ', ') ILIKE $${index})`)
   }
 
   if (domain) {
@@ -54,6 +55,11 @@ const buildLeadFilters = (query) => {
   if (status && ['pending', 'validated', 'cancelled'].includes(status)) {
     values.push(status)
     clauses.push(`status = $${values.length}`)
+  }
+
+  if (country) {
+    values.push(`%${country}%`)
+    clauses.push(`EXISTS (SELECT 1 FROM unnest(target_countries) AS country_item WHERE country_item ILIKE $${values.length})`)
   }
 
   if (startDate && isValidDateInput(startDate)) {
@@ -85,6 +91,11 @@ const ensureLeadStatusSchema = async () => {
   await pool.query(`
     ALTER TABLE leads
     ADD COLUMN IF NOT EXISTS status_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  `)
+
+  await pool.query(`
+    ALTER TABLE leads
+    ADD COLUMN IF NOT EXISTS target_countries TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]
   `)
 
   leadStatusSchemaReady = true
@@ -119,7 +130,7 @@ router.get('/admin/leads', requireAdminToken, async (req, res) => {
     const [leadsResult, totalResult] = await Promise.all([
       pool.query(
         `
-        SELECT id, full_name, email, domain, language_level, source, recommended_agent, status, status_updated_at, created_at
+        SELECT id, full_name, email, domain, target_countries, language_level, source, recommended_agent, status, status_updated_at, created_at
         FROM leads
         ${filters.whereSql}
         ORDER BY created_at DESC
@@ -135,6 +146,7 @@ router.get('/admin/leads', requireAdminToken, async (req, res) => {
       fullName: row.full_name,
       email: row.email,
       domain: row.domain,
+      targetCountries: row.target_countries || [],
       languageLevel: row.language_level,
       source: row.source,
       recommendedAgent: row.recommended_agent,
@@ -162,7 +174,7 @@ router.get('/admin/leads/export.csv', requireAdminToken, async (req, res) => {
 
     const result = await pool.query(
       `
-      SELECT id, full_name, email, domain, language_level, source, recommended_agent, status, status_updated_at, created_at
+      SELECT id, full_name, email, domain, target_countries, language_level, source, recommended_agent, status, status_updated_at, created_at
       FROM leads
       ${filters.whereSql}
       ORDER BY created_at DESC
@@ -170,7 +182,7 @@ router.get('/admin/leads/export.csv', requireAdminToken, async (req, res) => {
       filters.values,
     )
 
-    const header = ['id', 'full_name', 'email', 'domain', 'language_level', 'source', 'recommended_agent', 'status', 'status_updated_at', 'created_at']
+    const header = ['id', 'full_name', 'email', 'domain', 'target_countries', 'language_level', 'source', 'recommended_agent', 'status', 'status_updated_at', 'created_at']
     const lines = [header.join(',')]
 
     for (const row of result.rows) {
@@ -180,6 +192,7 @@ router.get('/admin/leads/export.csv', requireAdminToken, async (req, res) => {
           row.full_name,
           row.email,
           row.domain,
+          (row.target_countries || []).join(' | '),
           row.language_level,
           row.source,
           row.recommended_agent,

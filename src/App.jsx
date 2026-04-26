@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Briefcase,
@@ -56,6 +56,19 @@ const resolveApiBaseUrl = () => {
 }
 
 const API_BASE_URL = resolveApiBaseUrl()
+const BRAND_LOGO_PATH = '/logo-goglobal.png'
+
+const ALL_COUNTRY_CODES = [
+  'AF', 'AL', 'DZ', 'AD', 'AO', 'AG', 'AR', 'AM', 'AU', 'AT', 'AZ', 'BS', 'BH', 'BD', 'BB', 'BY', 'BE', 'BZ', 'BJ', 'BT', 'BO', 'BA',
+  'BW', 'BR', 'BN', 'BG', 'BF', 'BI', 'CV', 'KH', 'CM', 'CA', 'CF', 'TD', 'CL', 'CN', 'CO', 'KM', 'CG', 'CD', 'CR', 'CI', 'HR', 'CU',
+  'CY', 'CZ', 'DK', 'DJ', 'DM', 'DO', 'EC', 'EG', 'SV', 'GQ', 'ER', 'EE', 'SZ', 'ET', 'FJ', 'FI', 'FR', 'GA', 'GM', 'GE', 'DE', 'GH',
+  'GR', 'GD', 'GT', 'GN', 'GW', 'GY', 'HT', 'HN', 'HU', 'IS', 'IN', 'ID', 'IR', 'IQ', 'IE', 'IL', 'IT', 'JM', 'JP', 'JO', 'KZ', 'KE',
+  'KI', 'KP', 'KR', 'KW', 'KG', 'LA', 'LV', 'LB', 'LS', 'LR', 'LY', 'LI', 'LT', 'LU', 'MG', 'MW', 'MY', 'MV', 'ML', 'MT', 'MH', 'MR',
+  'MU', 'MX', 'FM', 'MD', 'MC', 'MN', 'ME', 'MA', 'MZ', 'MM', 'NA', 'NR', 'NP', 'NL', 'NZ', 'NI', 'NE', 'NG', 'MK', 'NO', 'OM', 'PK',
+  'PW', 'PA', 'PG', 'PY', 'PE', 'PH', 'PL', 'PT', 'QA', 'RO', 'RU', 'RW', 'KN', 'LC', 'VC', 'WS', 'SM', 'ST', 'SA', 'SN', 'RS', 'SC',
+  'SL', 'SG', 'SK', 'SI', 'SB', 'SO', 'ZA', 'SS', 'ES', 'LK', 'SD', 'SR', 'SE', 'CH', 'SY', 'TJ', 'TZ', 'TH', 'TL', 'TG', 'TO', 'TT',
+  'TN', 'TR', 'TM', 'TV', 'UG', 'UA', 'AE', 'GB', 'US', 'UY', 'UZ', 'VU', 'VA', 'VE', 'VN', 'YE', 'ZM', 'ZW', 'PS',
+]
 
 const trackAnalyticsEvent = async (eventType, source, metadata = {}) => {
   const payload = {
@@ -99,146 +112,123 @@ const buildBranchDetails = ({ duration, city, salary, documents, deadline }) => 
 
 const branches = [
   {
-    title: 'Pflege',
-    subtitle: 'Soins infirmiers / aide soignant',
+    title: 'Soins infirmiers / Sante',
     icon: HeartHandshake,
     details: buildBranchDetails({
-      duration: '3 ans',
-      city: 'Berlin / Hamburg',
-      salary: '2400-3200 EUR',
-      documents: 'CV, passeport, diplôme',
+      duration: '2-4 ans',
+      city: 'Toronto / Montreal / Berlin / Hamburg / Paris / Brussels',
+      salary: '3000-5200 EUR / 4800-7500 CAD',
+      documents: 'CV, passeport, diplome en sante, preuve de langue, equivalence professionnelle',
       deadline: '30/09/2026',
     }),
   },
   {
-    title: 'Koch / Köchin',
-    subtitle: 'Cuisine / restauration',
-    icon: ChefHat,
+    title: 'Technologie / IT',
+    icon: Laptop,
     details: buildBranchDetails({
-      duration: '2-3 ans',
-      city: 'Munich / Cologne',
-      salary: '2100-2900 EUR',
-      documents: 'CV, lettre de motivation, certificats',
+      duration: '1-3 ans',
+      city: 'Vancouver / Calgary / Berlin / Munich / Amsterdam / London',
+      salary: '3200-6500 EUR / 5500-9800 CAD',
+      documents: 'CV, portfolio, diplomes IT, certificats techniques, lettre de motivation',
       deadline: '15/10/2026',
     }),
   },
   {
-    title: 'Mechaniker/in',
-    subtitle: 'Mécanique automobile et industrielle',
+    title: 'Mecanique / Ingenierie',
     icon: Wrench,
     details: buildBranchDetails({
-      duration: '3 ans',
-      city: 'Stuttgart / Dortmund',
-      salary: '2500-3400 EUR',
-      documents: 'CV, attestations techniques',
+      duration: '2-4 ans',
+      city: 'Windsor / Ontario / Stuttgart / Frankfurt / Zurich / Barcelona',
+      salary: '2900-5600 EUR / 5000-8600 CAD',
+      documents: 'CV, diplome technique, attestations d experience, passeport, references',
       deadline: '10/10/2026',
     }),
   },
   {
-    title: 'Mechatroniker/in',
-    subtitle: 'Mécatronique',
-    icon: Factory,
+    title: 'Logistique / Transport',
+    icon: Truck,
     details: buildBranchDetails({
-      duration: '3.5 ans',
-      city: 'Bremen / Hanover',
-      salary: '2600-3600 EUR',
-      documents: 'CV, diplôme, expérience',
+      duration: '1-3 ans',
+      city: 'Toronto / Calgary / Frankfurt / Hamburg / Amsterdam / Brussels',
+      salary: '2400-4300 EUR / 3900-6800 CAD',
+      documents: 'CV, permis de conduire selon poste, certificats logistiques, casier judiciaire',
       deadline: '01/11/2026',
     }),
   },
   {
-    title: 'Elektriker/in',
-    subtitle: 'Électricité bâtiment / industrie',
-    icon: Hammer,
+    title: 'Restauration / Hotellerie',
+    icon: ChefHat,
     details: buildBranchDetails({
-      duration: '3 ans',
-      city: 'Frankfurt / Leipzig',
-      salary: '2400-3300 EUR',
-      documents: 'CV, certificats professionnels',
+      duration: '1-2 ans',
+      city: 'Montreal / Vancouver / Munich / Berlin / Paris / Barcelona',
+      salary: '2100-3600 EUR / 3600-5700 CAD',
+      documents: 'CV, lettre de motivation, certificats d hygiene, references professionnelles',
       deadline: '20/10/2026',
     }),
   },
   {
-    title: 'Lagerlogistik',
-    subtitle: 'Logistique / entrepôt',
-    icon: Truck,
+    title: 'Construction / Batiment',
+    icon: Hammer,
     details: buildBranchDetails({
-      duration: '2-3 ans',
-      city: 'Duisburg / Nuremberg',
-      salary: '2100-2800 EUR',
-      documents: 'CV, pièce d’identité',
+      duration: '2-4 ans',
+      city: 'Calgary / Ontario / Stuttgart / Frankfurt / Zurich / Brussels',
+      salary: '2600-4700 EUR / 4300-7600 CAD',
+      documents: 'CV, certificats metier, attestations de securite, passeport, experience chantier',
       deadline: '05/11/2026',
     }),
   },
   {
-    title: 'Verkäufer/in',
-    subtitle: 'Vente / magasin',
+    title: 'Vente / Commerce',
     icon: ShoppingBag,
     details: buildBranchDetails({
-      duration: '2-3 ans',
-      city: 'Berlin / Essen',
-      salary: '2000-2700 EUR',
-      documents: 'CV, lettre de motivation',
+      duration: '1-3 ans',
+      city: 'Toronto / Montreal / Berlin / Hamburg / Paris / London',
+      salary: '2200-3900 EUR / 3700-6200 CAD',
+      documents: 'CV, lettre de motivation, preuves d experience client, references',
       deadline: '12/10/2026',
     }),
   },
   {
-    title: 'Hotellerie',
-    subtitle: 'Hôtellerie',
+    title: 'Tourisme / Evenements',
     icon: Building2,
     details: buildBranchDetails({
-      duration: '2-3 ans',
-      city: 'Hamburg / Berlin',
-      salary: '2100-2900 EUR',
-      documents: 'CV, références',
+      duration: '1-3 ans',
+      city: 'Vancouver / Toronto / Munich / Berlin / Amsterdam / Barcelona',
+      salary: '2100-3800 EUR / 3500-6100 CAD',
+      documents: 'CV, lettre de motivation, certificats linguistiques, references',
       deadline: '25/10/2026',
     }),
   },
   {
-    title: 'Gastronomie',
-    subtitle: 'Service / restaurant',
-    icon: Utensils,
+    title: 'Manufactura / Industrie',
+    icon: Factory,
     details: buildBranchDetails({
-      duration: '2-3 ans',
-      city: 'Cologne / Bonn',
-      salary: '2000-2800 EUR',
-      documents: 'CV, disponibilité',
+      duration: '2-4 ans',
+      city: 'Windsor / Ontario / Stuttgart / Hamburg / Zurich / Brussels',
+      salary: '2500-4600 EUR / 4100-7400 CAD',
+      documents: 'CV, diplome technique, certificats securite, experience industrielle',
       deadline: '08/11/2026',
     }),
   },
   {
-    title: 'Altenpflege',
-    subtitle: 'Soins aux personnes âgées',
+    title: 'Soins aux personnes agees',
     icon: Stethoscope,
     details: buildBranchDetails({
-      duration: '3 ans',
-      city: 'Dresden / Hanover',
-      salary: '2500-3400 EUR',
-      documents: 'CV, diplôme, casier',
+      duration: '1-3 ans',
+      city: 'Montreal / Toronto / Berlin / Munich / Paris / London',
+      salary: '2600-4300 EUR / 4200-6700 CAD',
+      documents: 'CV, diplome en soins, casier judiciaire, references, preuve de langue',
       deadline: '30/10/2026',
     }),
   },
   {
-    title: 'KFZ-Technik',
-    subtitle: 'Maintenance automobile',
-    icon: Car,
+    title: 'Gestion / Administration',
+    icon: Briefcase,
     details: buildBranchDetails({
-      duration: '3 ans',
-      city: 'Stuttgart / Wolfsburg',
-      salary: '2500-3500 EUR',
-      documents: 'CV, attestation atelier',
-      deadline: '14/11/2026',
-    }),
-  },
-  {
-    title: 'IT Support',
-    subtitle: 'Support informatique',
-    icon: Laptop,
-    details: buildBranchDetails({
-      duration: '2-3 ans',
-      city: 'Berlin / Munich',
-      salary: '2800-3800 EUR',
-      documents: 'CV, projets, certificats',
+      duration: '1-4 ans',
+      city: 'Toronto / Vancouver / Frankfurt / Berlin / Amsterdam / Paris',
+      salary: '2400-4800 EUR / 3900-7600 CAD',
+      documents: 'CV, lettre de motivation, diplome en gestion, certificats bureautiques, references',
       deadline: '22/11/2026',
     }),
   },
@@ -280,50 +270,118 @@ const openRotatingWhatsAppLink = (text) => {
 const createWhatsAppLink = (branchTitle, language = 'fr') => {
   const text =
     language === 'ar'
-      ? `مرحبا، أريد مزيدا من المعلومات حول تخصص ${branchTitle} في ألمانيا.`
-      : `Bonjour, je veux plus d'informations sur la filière ${branchTitle} en Allemagne.`
+      ? `مرحبا، أريد مزيدا من المعلومات حول تخصص ${branchTitle} في العالم.`
+      : `Bonjour, je veux plus d'informations sur le domaine ${branchTitle} au Canada, en Allemagne ou en Europe.`
   return buildWhatsAppLink(getNextWhatsAppRecipient(), text)
 }
 
 const services = [
-  { icon: Search, title: "Collecte d'emails d'entreprises", description: 'Nous trouvons les emails RH utiles selon votre profil.' },
-  { icon: Mail, title: 'Envoi des contacts aux clients', description: 'Nous vous envoyons une liste claire d’emails d’entreprises.' },
-  { icon: FileText, title: 'Traduction des dossiers', description: 'Nous traduisons CV, lettres et documents essentiels.' },
-  { icon: Globe, title: 'Informations et consultations', description: 'Nous donnons des infos pratiques et des consultations rapides.' },
-  { icon: ShieldCheck, title: 'Conseils de candidature', description: 'Nous vous guidons pour mieux contacter les entreprises.' },
+  { icon: Search, title: "Recherche d'offres d'emploi internationales", description: 'Nous trouvons des offres adaptees a votre profil au Canada, en Allemagne et en Europe.' },
+  { icon: Mail, title: 'Envoi des offres pertinentes', description: 'Nous vous envoyons une selection claire d’offres et de contacts utiles.' },
+  { icon: FileText, title: 'Preparation et traduction des dossiers', description: 'Nous preparons et traduisons CV, lettres et documents essentiels selon le pays cible.' },
+  { icon: Globe, title: 'Informations sur les marches du travail', description: 'Nous partageons des informations pratiques sur le Canada, l’Allemagne et l’Europe.' },
+  { icon: ShieldCheck, title: 'Conseils de candidature internationaux', description: 'Nous vous guidons pour postuler efficacement sur plusieurs marches internationaux.' },
+]
+
+const serviceOffers = [
+  {
+    id: 'essential',
+    icon: Briefcase,
+    nameFr: 'Offre Essentielle',
+    nameAr: 'الباقة الأساسية',
+    subtitleFr: 'Pour commencer rapidement',
+    subtitleAr: 'للبداية بسرعة',
+    featuresFr: [
+      'Analyse du profil et choix de pays cible',
+      'Selection initiale d’offres compatibles',
+      'Conseils CV + lettre selon le marche choisi',
+    ],
+    featuresAr: [
+      'تحليل الملف وتحديد الدولة المناسبة',
+      'اختيار أولي للفرص المناسبة',
+      'نصائح للسيرة الذاتية ورسالة التحفيز حسب البلد',
+    ],
+  },
+  {
+    id: 'pro',
+    icon: Globe,
+    nameFr: 'Offre Pro International',
+    nameAr: 'الباقة الاحترافية الدولية',
+    subtitleFr: 'Pour candidater sur plusieurs pays',
+    subtitleAr: 'للتقديم في عدة دول',
+    featuresFr: [
+      'Recherche active Canada, Allemagne et Europe',
+      'Adaptation avancee du dossier par destination',
+      'Suivi des candidatures et relances organisees',
+    ],
+    featuresAr: [
+      'بحث نشط في كندا وألمانيا وأوروبا',
+      'تكييف متقدم للملف حسب الوجهة',
+      'متابعة الطلبات والتذكير بشكل منظم',
+    ],
+  },
+  {
+    id: 'premium',
+    icon: ShieldCheck,
+    nameFr: 'Offre Premium Accompagnement',
+    nameAr: 'الباقة الممتازة للمواكبة',
+    subtitleFr: 'Pour un suivi complet jusqu’au contact',
+    subtitleAr: 'لمواكبة كاملة حتى التواصل مع الشركات',
+    featuresFr: [
+      'Plan d’action personnalise semaine par semaine',
+      'Simulation entretien + correction dossier',
+      'Priorite de suivi via WhatsApp et email',
+    ],
+    featuresAr: [
+      'خطة عمل شخصية أسبوعا بأسبوع',
+      'محاكاة مقابلة + تصحيح كامل للملف',
+      'أولوية المتابعة عبر واتساب والبريد الإلكتروني',
+    ],
+  },
 ]
 
 const steps = [
-  { number: '01', title: 'Analyse du besoin', text: 'On définit votre profil et votre cible.' },
-  { number: '02', title: 'Collecte des emails', text: 'On prépare les contacts RH utiles.' },
-  { number: '03', title: 'Traduction du dossier', text: 'On traduit les documents importants.' },
-  { number: '04', title: 'Consultation et orientation', text: 'On vous guide pour les prochaines étapes.' },
+  { number: '01', title: 'Analyse du besoin', text: 'On definit votre profil, votre metier cible et vos pays preferes.' },
+  { number: '02', title: 'Recherche d’offres', text: 'On identifie les offres pertinentes sur les marches internationaux.' },
+  { number: '03', title: 'Preparation du dossier', text: 'On prepare et adapte vos documents importants selon la destination.' },
+  { number: '04', title: 'Consultation et placement', text: 'On vous oriente vers les prochaines etapes jusqu’au positionnement.' },
 ]
 
 const highlights = [
-  'Emails d’entreprises ciblés',
-  'Contacts envoyés rapidement',
-  'Traduction des dossiers de candidature',
-  'Infos pratiques utiles',
-  'Consultations personnalisées',
-  'Accompagnement simple',
+  'Offres ciblees Canada, Allemagne et Europe',
+  'Selection envoyee rapidement',
+  'Dossiers adaptes aux standards internationaux',
+  'Informations pays et marches de travail',
+  'Consultations personnalisees selon destination',
+  'Accompagnement complet et pratique',
 ]
 
 const faq = [
-  { q: 'À qui s’adresse ce service ?', a: 'À toute personne qui veut candidater en Allemagne.' },
+  { q: 'À qui s’adresse ce service ?', a: 'À toute personne qui veut travailler au Canada, en Allemagne ou en Europe.' },
   { q: 'Est-ce que vous gérez le visa ?', a: 'Non, nous ne gérons pas le visa.' },
-  { q: 'Vous faites quoi exactement ?', a: 'Emails d’entreprises, traduction de dossier, infos et consultations.' },
-  { q: 'Vous aidez si mon allemand est faible ?', a: 'Oui, nous adaptons les documents à votre niveau.' },
+  { q: 'Vous faites quoi exactement ?', a: 'Recherche d’offres, preparation de dossier, infos marches et consultations.' },
+  { q: 'Vous aidez avec plusieurs langues ?', a: 'Oui, nous adaptons les documents selon votre niveau et la langue du pays cible.' },
 ]
 
 const stats = [
-  { value: 'CV', label: 'Préparé professionnellement' },
-  { value: 'Bewerbung', label: 'Accompagnement dossier complet' },
-  { value: 'Offres', label: 'Recherche ciblée' },
-  { value: 'Emails', label: 'Organisation des contacts RH' },
+  { value: 'CV', label: 'Prepares professionnellement' },
+  { value: 'Dossiers', label: 'Accompagnement international complet' },
+  { value: 'Offres', label: 'Recherche ciblee multi-pays' },
+  { value: 'Marches', label: 'Orientation Canada Allemagne Europe' },
 ]
 
 const AR_TEXT_MAP = {
+  'Soins infirmiers / Santé': 'الصحة / التمريض',
+  'Technologie / IT': 'التكنولوجيا / تقنية المعلومات',
+  'Mécanique / Ingénierie': 'الميكانيكا / الهندسة',
+  'Logistique / Transport': 'الخدمات اللوجستية / النقل',
+  'Restauration / Hôtellerie': 'الطعام والشراب / الضيافة',
+  'Construction / Bâtiment': 'البناء / العقارات',
+  'Vente / Commerce': 'البيع / التجارة',
+  'Tourisme / Événements': 'السياحة / الأحداث',
+  'Manufactura / Industrie': 'التصنيع / الصناعة',
+  'Soins aux personnes âgées': 'رعاية المسنين',
+  'Gestion / Administration': 'الإدارة / الموارد البشرية',
   'Soins infirmiers / aide soignant': 'التمريض / مساعد تمريض',
   'Cuisine / restauration': 'الطبخ / المطاعم',
   'Mécanique automobile et industrielle': 'الميكانيك السياراتي والصناعي',
@@ -333,54 +391,53 @@ const AR_TEXT_MAP = {
   'Vente / magasin': 'البيع / المتجر',
   'Hôtellerie': 'الفندقة',
   'Service / restaurant': 'الخدمة / المطعم',
-  'Soins aux personnes âgées': 'رعاية كبار السن',
   'Maintenance automobile': 'صيانة السيارات',
   'Support informatique': 'الدعم المعلوماتي',
-  "Collecte d'emails d'entreprises": 'جمع عناوين بريد الشركات',
-  'Nous trouvons les emails RH utiles selon votre profil.': 'نبحث لك عن عناوين بريد الموارد البشرية المناسبة لملفك.',
-  'Envoi des contacts aux clients': 'إرسال جهات الاتصال للعميل',
-  'Nous vous envoyons une liste claire d’emails d’entreprises.': 'نرسل لك قائمة واضحة بعناوين بريد الشركات.',
-  'Traduction des dossiers': 'ترجمة الملفات',
-  'Nous traduisons CV, lettres et documents essentiels.': 'نترجم السيرة الذاتية والرسائل والوثائق الأساسية.',
-  'Informations et consultations': 'معلومات واستشارات',
-  'Nous donnons des infos pratiques et des consultations rapides.': 'نقدم معلومات عملية واستشارات سريعة.',
-  'Conseils de candidature': 'نصائح التقديم',
-  'Nous vous guidons pour mieux contacter les entreprises.': 'نرشدك للتواصل مع الشركات بشكل أفضل.',
+  "Recherche d'offres d'emploi internationales": 'البحث عن فرص عمل دولية',
+  'Nous trouvons des offres adaptees a votre profil au Canada, en Allemagne et en Europe.': 'نبحث عن فرص تناسب ملفك في كندا وألمانيا وأوروبا.',
+  'Envoi des offres pertinentes': 'إرسال الفرص المناسبة',
+  'Nous vous envoyons une selection claire d’offres et de contacts utiles.': 'نرسل لك قائمة واضحة بالفرص وجهات الاتصال المفيدة.',
+  'Preparation et traduction des dossiers': 'إعداد وترجمة الملفات',
+  'Nous preparons et traduisons CV, lettres et documents essentiels selon le pays cible.': 'نقوم بإعداد وترجمة السيرة الذاتية والرسائل والوثائق الأساسية حسب البلد المستهدف.',
+  'Informations sur les marches du travail': 'معلومات حول أسواق العمل',
+  'Nous partageons des informations pratiques sur le Canada, l’Allemagne et l’Europe.': 'نشارك معلومات عملية حول كندا وألمانيا وأوروبا.',
+  'Conseils de candidature internationaux': 'نصائح تقديم دولية',
+  'Nous vous guidons pour postuler efficacement sur plusieurs marches internationaux.': 'نرشدك للتقديم بفعالية في عدة أسواق دولية.',
   'Analyse du besoin': 'تحليل الحاجة',
-  'On définit votre profil et votre cible.': 'نحدد ملفك والجهة المستهدفة.',
-  'Collecte des emails': 'جمع العناوين الإلكترونية',
-  'On prépare les contacts RH utiles.': 'نجهز جهات اتصال الموارد البشرية المناسبة.',
-  'Traduction du dossier': 'ترجمة الملف',
-  'On traduit les documents importants.': 'نترجم الوثائق المهمة.',
-  'Consultation et orientation': 'الاستشارة والتوجيه',
-  'On vous guide pour les prochaines étapes.': 'نرشدك للخطوات القادمة.',
-  'Emails d’entreprises ciblés': 'عناوين بريد شركات مستهدفة',
-  'Contacts envoyés rapidement': 'إرسال جهات الاتصال بسرعة',
-  'Traduction des dossiers de candidature': 'ترجمة ملفات التقديم',
-  'Infos pratiques utiles': 'معلومات عملية مفيدة',
-  'Consultations personnalisées': 'استشارات مخصصة',
-  'Accompagnement simple': 'مرافقة بسيطة',
+  'On definit votre profil, votre metier cible et vos pays preferes.': 'نحدد ملفك ومهنتك المستهدفة والدول التي تفضلها.',
+  'Recherche d’offres': 'البحث عن فرص',
+  'On identifie les offres pertinentes sur les marches internationaux.': 'نحدد الفرص المناسبة في أسواق العمل الدولية.',
+  'Preparation du dossier': 'إعداد الملف',
+  'On prepare et adapte vos documents importants selon la destination.': 'نجهز ونكيف وثائقك المهمة حسب الوجهة.',
+  'Consultation et placement': 'الاستشارة والتوجيه المهني',
+  'On vous oriente vers les prochaines etapes jusqu’au positionnement.': 'نوجهك للخطوات القادمة حتى الوصول إلى فرصة مناسبة.',
+  'Offres ciblees Canada, Allemagne et Europe': 'فرص مستهدفة في كندا وألمانيا وأوروبا',
+  'Selection envoyee rapidement': 'إرسال الاختيارات بسرعة',
+  'Dossiers adaptes aux standards internationaux': 'ملفات متوافقة مع المعايير الدولية',
+  'Informations pays et marches de travail': 'معلومات عن الدول وأسواق العمل',
+  'Consultations personnalisees selon destination': 'استشارات مخصصة حسب الوجهة',
+  'Accompagnement complet et pratique': 'مرافقة كاملة وعملية',
   'À qui s’adresse ce service ?': 'لمن هذه الخدمة؟',
-  'À toute personne qui veut candidater en Allemagne.': 'لكل شخص يريد التقديم في ألمانيا.',
+  'À toute personne qui veut travailler au Canada, en Allemagne ou en Europe.': 'لكل شخص يريد العمل في كندا أو ألمانيا أو أوروبا.',
   'Est-ce que vous gérez le visa ?': 'هل تتكفلون بالفيزا؟',
   'Non, nous ne gérons pas le visa.': 'لا، نحن لا نتكفل بالفيزا.',
   'Vous faites quoi exactement ?': 'ماذا تقدمون بالضبط؟',
-  'Emails d’entreprises, traduction de dossier, infos et consultations.': 'عناوين بريد الشركات، ترجمة الملفات، معلومات واستشارات.',
-  'Vous aidez si mon allemand est faible ?': 'هل تساعدونني إذا كان مستواي ضعيفا في الألمانية؟',
-  'Oui, nous adaptons les documents à votre niveau.': 'نعم، نكيف الوثائق حسب مستواك.',
-  'Préparé professionnellement': 'معد باحتراف',
-  'Accompagnement dossier complet': 'مرافقة ملف كامل',
-  'Recherche ciblée': 'بحث موجه',
-  'Organisation des contacts RH': 'تنظيم جهات اتصال الموارد البشرية',
+  'Recherche d’offres, preparation de dossier, infos marches et consultations.': 'البحث عن الفرص، إعداد الملف، معلومات عن الأسواق واستشارات.',
+  'Vous aidez avec plusieurs langues ?': 'هل تساعدون بعدة لغات؟',
+  'Oui, nous adaptons les documents selon votre niveau et la langue du pays cible.': 'نعم، نكيف الوثائق حسب مستواك ولغة البلد المستهدف.',
+  'Prepares professionnellement': 'إعداد احترافي',
+  'Accompagnement international complet': 'مرافقة دولية كاملة',
+  'Recherche ciblee multi-pays': 'بحث موجه متعدد الدول',
+  'Orientation Canada Allemagne Europe': 'توجيه نحو كندا وألمانيا وأوروبا',
   'Étudiants': 'الطلاب',
   'Jeunes diplômés': 'الخريجون الجدد',
-  'Débutants dans les candidatures allemandes': 'المبتدئون في التقديم لألمانيا',
-  'Candidats en Ausbildung': 'مترشحو التكوين المهني',
-  'Personnes qui veulent partir travailler en Allemagne': 'أشخاص يريدون العمل في ألمانيا',
+  'Débutants dans les candidatures internationales': 'المبتدئون في التقديم الدولي',
+  'Candidats en formation professionnelle': 'مترشحو التكوين المهني',
+  'Personnes qui veulent partir travailler au Canada, en Allemagne ou en Europe': 'أشخاص يريدون العمل في كندا أو ألمانيا أو أوروبا',
   'Personnes ayant besoin d’aide pour leurs documents': 'أشخاص يحتاجون مساعدة في وثائقهم',
 }
 
-const servicesPlaceholderImage = '/services-placeholder.svg'
+const servicesPlaceholderImage = BRAND_LOGO_PATH
 const siteQrImage = '/qr-service-for-deutschland.png'
 const languageLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const supportEmail = 'baloua96@hotmail.fr'
@@ -415,13 +472,16 @@ const advanceApplicationMember = () => {
   window.localStorage.setItem(applicationRoutingKey, String(nextIndex))
 }
 
-const createRegistrationMessage = ({ name, email, domain, level, language = 'fr' }) => {
+const createRegistrationMessage = ({ name, email, domain, level, countries, language = 'fr' }) => {
+  const countriesLabel = countries.length > 0 ? countries.join(', ') : language === 'ar' ? 'غير محدد' : 'Non renseigné'
+
   if (language === 'ar') {
     return [
       'مرحبا، أريد التسجيل في الخدمة.',
       `الاسم: ${name || 'غير محدد'}`,
       `البريد الإلكتروني: ${email || 'غير محدد'}`,
       `المجال المختار: ${domain}`,
+      `البلدان المختارة: ${countriesLabel}`,
       `مستوى اللغة: ${level}`,
       'أرغب في المتابعة مع مستشار.',
     ].join('\n')
@@ -432,6 +492,7 @@ const createRegistrationMessage = ({ name, email, domain, level, language = 'fr'
     `Nom: ${name || 'Non renseigné'}`,
     `Email: ${email || 'Non renseigné'}`,
     `Domaine choisi: ${domain}`,
+    `Pays choisis: ${countriesLabel}`,
     `Niveau de langue: ${level}`,
     'Je souhaite continuer avec un conseiller.',
   ].join('\n')
@@ -450,14 +511,95 @@ export default function App() {
   const [candidateEmail, setCandidateEmail] = useState('')
   const [candidateWebsite, setCandidateWebsite] = useState('')
   const [selectedDomain, setSelectedDomain] = useState(branches[0].title)
+  const [selectedCountries, setSelectedCountries] = useState([])
+  const [countrySearch, setCountrySearch] = useState('')
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false)
   const [selectedLevel, setSelectedLevel] = useState('B1')
   const [leadSubmissionError, setLeadSubmissionError] = useState('')
   const [leadSubmissionSuccess, setLeadSubmissionSuccess] = useState('')
   const [leadSubmitting, setLeadSubmitting] = useState(false)
+  const [brandLogoFailed, setBrandLogoFailed] = useState(false)
+  const countryPickerRef = useRef(null)
 
   const isArabic = activeLanguage === 'ar'
   const t = (fr, ar) => (isArabic ? ar : fr)
   const tr = (text) => (isArabic ? AR_TEXT_MAP[text] ?? text : text)
+
+  const countryFormatter = useMemo(() => {
+    try {
+      return new Intl.DisplayNames([isArabic ? 'ar' : 'fr'], { type: 'region' })
+    } catch {
+      return { of: (value) => value }
+    }
+  }, [isArabic])
+
+  const countryOptions = useMemo(
+    () =>
+      ALL_COUNTRY_CODES
+        .map((code) => ({
+          code,
+          label: countryFormatter.of(code) || code,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label, isArabic ? 'ar' : 'fr')),
+    [countryFormatter, isArabic],
+  )
+
+  const countryLabelByCode = useMemo(
+    () => Object.fromEntries(countryOptions.map((country) => [country.code, country.label])),
+    [countryOptions],
+  )
+
+  const filteredCountryOptions = useMemo(() => {
+    const query = countrySearch.trim().toLowerCase()
+
+    if (!query) {
+      return countryOptions
+    }
+
+    return countryOptions.filter((country) => {
+      const label = country.label.toLowerCase()
+      const code = country.code.toLowerCase()
+      return label.includes(query) || code.includes(query)
+    })
+  }, [countryOptions, countrySearch])
+
+  const selectedCountryLabels = useMemo(
+    () => selectedCountries.map((code) => countryLabelByCode[code] || code),
+    [countryLabelByCode, selectedCountries],
+  )
+
+  const handleCountryToggle = (countryCode) => {
+    setSelectedCountries((previous) => {
+      if (previous.includes(countryCode)) {
+        return previous.filter((code) => code !== countryCode)
+      }
+
+      if (previous.length >= 20) {
+        return previous
+      }
+
+      return [...previous, countryCode]
+    })
+  }
+
+  const handleCountryChipRemove = (countryCode) => {
+    setSelectedCountries((previous) => previous.filter((code) => code !== countryCode))
+  }
+
+  useEffect(() => {
+    if (!countryDropdownOpen) {
+      return
+    }
+
+    const handleOutsideClick = (event) => {
+      if (countryPickerRef.current && !countryPickerRef.current.contains(event.target)) {
+        setCountryDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [countryDropdownOpen])
 
   const localizeBranchDetail = (detail) => {
     if (!isArabic) {
@@ -475,13 +617,13 @@ export default function App() {
 
   const branchQuestionMessage = (branchTitle) =>
     t(
-      `Bonjour, je veux plus d'informations sur la filière ${branchTitle} en Allemagne.`,
-      `مرحبا، أريد مزيدا من المعلومات حول تخصص ${branchTitle} في ألمانيا.`,
+      `Bonjour, je veux plus d'informations sur le domaine ${branchTitle} au Canada, en Allemagne ou en Europe.`,
+      `مرحبا، أريد مزيدا من المعلومات حول تخصص ${branchTitle} في العالم.`,
     )
 
   const generalInfoMessage = t(
-    'Bonjour, je veux des informations pour ma candidature en Allemagne.',
-    'مرحبا، أريد معلومات حول طلبي في ألمانيا.',
+    'Bonjour, je veux des informations pour ma candidature au Canada, en Allemagne ou en Europe.',
+    'مرحبا، أريد معلومات حول طلبي في كندا أو ألمانيا أو أوروبا.',
   )
 
   useEffect(() => {
@@ -501,6 +643,7 @@ export default function App() {
     name: candidateName,
     email: candidateEmail,
     domain: selectedDomain,
+    countries: selectedCountryLabels,
     level: selectedLevel,
     language: activeLanguage,
   })
@@ -524,8 +667,14 @@ export default function App() {
       return false
     }
 
+    if (selectedCountries.length === 0) {
+      setLeadSubmissionError(t('Veuillez choisir au moins un pays cible.', 'يرجى اختيار دولة واحدة على الأقل.'))
+      return false
+    }
+
     await trackAnalyticsEvent('lead_submit_attempt', source, {
       domain: selectedDomain,
+      targetCountriesCount: selectedCountries.length,
       languageLevel: selectedLevel,
     })
 
@@ -541,6 +690,7 @@ export default function App() {
           fullName: trimmedName,
           email: trimmedEmail,
           domain: selectedDomain,
+          targetCountries: selectedCountries,
           languageLevel: selectedLevel,
           source,
           recommendedAgent: activeMember.name,
@@ -570,6 +720,7 @@ export default function App() {
       setLeadSubmissionSuccess(t('Votre demande a bien ete enregistree.', 'تم تسجيل طلبك بنجاح.'))
       await trackAnalyticsEvent('lead_submit_success', source, {
         domain: selectedDomain,
+        targetCountriesCount: selectedCountries.length,
         languageLevel: selectedLevel,
       })
       return true
@@ -625,7 +776,7 @@ export default function App() {
       languageLevel: selectedLevel,
     })
 
-    const emailSubject = encodeURIComponent(t('Nouvelle candidature - Service Carriere Allemagne', 'طلب جديد - خدمة المسار المهني ألمانيا'))
+    const emailSubject = encodeURIComponent(t('Nouvelle candidature - Service Carriere Internationale', 'طلب جديد - خدمة المسار المهني الدولي'))
     const emailBody = encodeURIComponent(
       isArabic
         ? `${consultationMessage}\n\nالقناة المختارة: البريد الإلكتروني\nالمستشار المعين: ${activeMember.name} (+${activeMember.phone})`
@@ -646,15 +797,27 @@ export default function App() {
 
         <header className="topbar">
           <div className="brand">
-            <div className="brand-mark"><Briefcase className="icon-sm" /></div>
+            <div className="brand-mark">
+              {!brandLogoFailed ? (
+                <img
+                  src={BRAND_LOGO_PATH}
+                  alt={t('Logo GOGLOBAL', 'شعار GOGLOBAL')}
+                  className="brand-logo"
+                  loading="eager"
+                  onError={() => setBrandLogoFailed(true)}
+                />
+              ) : (
+                <Briefcase className="icon-sm" />
+              )}
+            </div>
             <div>
-              <p className="brand-title">{t('Service Carrière Allemagne', 'خدمة المسار المهني ألمانيا')}</p>
-              <p className="brand-subtitle">{t('Emploi • Ausbildung • Aide à la candidature', 'وظيفة • تدريب مهني • دعم التقديم')}</p>
+              <p className="brand-title">{t('Service Carriere Internationale', 'خدمة المسار المهني الدولي')}</p>
+              <p className="brand-subtitle">{t('Emploi international • Formation • Accompagnement dossier', 'وظائف دولية • تكوين • مواكبة الملف')}</p>
             </div>
           </div>
 
           <div className="topbar-actions">
-            <p className="topbar-note">{t('Accompagnement professionnel pour candidater en Allemagne', 'مرافقة مهنية للتقديم في ألمانيا')}</p>
+            <p className="topbar-note">{t('Accompagnement professionnel pour candidater au Canada, en Allemagne et en Europe', 'مرافقة مهنية للتقديم في كندا وألمانيا وأوروبا')}</p>
             <Button
               type="button"
               size="sm"
@@ -680,11 +843,11 @@ export default function App() {
 
         <div className="hero-grid">
           <Animated.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }} className="hero-copy">
-            <div className="eyebrow"><Sparkles className="icon-xs" /> {t('Accompagnement complet pour travailler ou se former en Allemagne', 'مرافقة كاملة للعمل أو التكوين في ألمانيا')}</div>
+            <div className="eyebrow"><Sparkles className="icon-xs" /> {t('Accompagnement complet pour travailler ou se former au Canada, en Allemagne et en Europe', 'مرافقة كاملة للعمل أو التكوين في كندا وألمانيا وأوروبا')}</div>
 
-            <h1>{t('Construisez votre chemin vers un ', 'ابنِ طريقك نحو ')}<span>{t('emploi', 'وظيفة')}</span>{t(' ou une ', ' أو ')}<span className="blue">Ausbildung</span>{t(' en Allemagne.', ' في ألمانيا.')}</h1>
+            <h1>{t('Construisez votre chemin vers un ', 'ابنِ طريقك نحو ')}<span>{t('emploi', 'وظيفة')}</span>{t(' ou une ', ' أو ')}<span className="blue">formation</span>{t(' au Canada, en Allemagne ou en Europe.', ' في كندا أو ألمانيا أو أوروبا.')}</h1>
 
-            <p className="hero-text">{t('Nous collectons des emails d’entreprises, traduisons vos dossiers et vous conseillons pour candidater plus vite.', 'نجمع لك عناوين بريد الشركات، نترجم ملفاتك، ونرشدك للتقديم بشكل أسرع.')}</p>
+            <p className="hero-text">{t('Nous identifions les bonnes offres, adaptons votre dossier et vous accompagnons jusqu’au contact avec les recruteurs.', 'نحدد الفرص المناسبة، نجهز ملفك بطريقة احترافية، ونرافقك حتى التواصل مع جهات التوظيف.')}</p>
 
             <div className="hero-actions">
               <Button
@@ -731,7 +894,15 @@ export default function App() {
         </div>
 
         <div className="video-frame">
-          <img className="promo-video" src={servicesPlaceholderImage} alt={t('Visuel temporaire présentant nos services', 'صورة مؤقتة تعرض خدماتنا')} loading="lazy" />
+          <img
+            className="promo-video"
+            src={servicesPlaceholderImage}
+            alt={t('Logo GOGLOBAL', 'شعار GOGLOBAL')}
+            loading="lazy"
+            onError={(event) => {
+              event.currentTarget.src = '/services-placeholder.svg'
+            }}
+          />
 
           <div className="video-overlay">
             <div className="video-badge">
@@ -799,6 +970,60 @@ export default function App() {
         </div>
       </section>
 
+      <section className="content-section offers-section" id="offers">
+        <div className="section-intro">
+          <p className="section-kicker">{t('Nos offres', 'عروضنا')}</p>
+          <h2>{t('Choisissez le niveau d’accompagnement qui vous convient', 'اختر مستوى المواكبة المناسب لك')}</h2>
+          <p>{t('Des offres claires pour avancer rapidement, selon votre objectif et votre budget.', 'عروض واضحة للتقدم بسرعة حسب هدفك وميزانيتك.')}</p>
+        </div>
+
+        <div className="offer-grid">
+          {serviceOffers.map((offer, index) => {
+            const Icon = offer.icon
+            const features = isArabic ? offer.featuresAr : offer.featuresFr
+            return (
+              <Animated.div
+                key={offer.id}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.42, delay: index * 0.06 }}
+              >
+                <Card className={`glass-card offer-card ${offer.id === 'pro' ? 'offer-card-featured' : ''}`}>
+                  <CardContent className="card-content">
+                    <div className="offer-head">
+                      <div className="service-icon-wrap"><Icon className="icon-sm success-text" /></div>
+                      <div>
+                        <h3>{isArabic ? offer.nameAr : offer.nameFr}</h3>
+                        <p>{isArabic ? offer.subtitleAr : offer.subtitleFr}</p>
+                      </div>
+                    </div>
+
+                    <ul className="offer-features">
+                      {features.map((feature) => (
+                        <li key={feature}>
+                          <CheckCircle2 className="icon-xs success" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button
+                      type="button"
+                      className="offer-cta"
+                      onClick={() => scrollToSection('contact')}
+                      aria-label={t('Choisir cette offre', 'اختيار هذه الباقة')}
+                    >
+                      {t('Choisir cette offre', 'اختيار هذه الباقة')} <ArrowRight className="icon-xs ml-2" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Animated.div>
+            )
+          })}
+        </div>
+      </section>
+
       <section className="content-section">
         <div className="section-intro narrow">
           <p className="section-kicker">{t('Nos services', 'خدماتنا')}</p>
@@ -843,7 +1068,7 @@ export default function App() {
 
           <div className="split-side">
             <Card className="glass-card side-card"><CardContent className="card-content"><h3>{t('Pourquoi les clients choisissent ce service', 'لماذا يختار العملاء هذه الخدمة')}</h3><div className="check-list large">{highlights.map((item) => (<div key={item} className="check-row"><CheckCircle2 className="icon-sm success" /><p>{tr(item)}</p></div>))}</div></CardContent></Card>
-            <Card className="glass-card side-card alt-card"><CardContent className="card-content"><h3>{t('Idéal pour', 'مناسب لـ')}</h3><div className="tag-grid">{['Étudiants', 'Jeunes diplômés', 'Débutants dans les candidatures allemandes', 'Candidats en Ausbildung', 'Personnes qui veulent partir travailler en Allemagne', 'Personnes ayant besoin d’aide pour leurs documents'].map((group) => (<div key={group} className="tag-item">{tr(group)}</div>))}</div></CardContent></Card>
+            <Card className="glass-card side-card alt-card"><CardContent className="card-content"><h3>{t('Idéal pour', 'مناسب لـ')}</h3><div className="tag-grid">{['Étudiants', 'Jeunes diplômés', 'Débutants dans les candidatures internationales', 'Candidats en formation professionnelle', 'Personnes qui veulent partir travailler au Canada, en Allemagne ou en Europe', 'Personnes ayant besoin d’aide pour leurs documents'].map((group) => (<div key={group} className="tag-item">{tr(group)}</div>))}</div></CardContent></Card>
           </div>
         </div>
       </section>
@@ -931,7 +1156,7 @@ export default function App() {
               </select>
 
               <fieldset className="language-level">
-                <legend>{t('Niveau de langue (allemand)', 'مستوى اللغة (الألمانية)')}</legend>
+                <legend>{t('Niveau de langue (anglais / allemand)', 'مستوى اللغة (الإنجليزية / الألمانية)')}</legend>
                 <div className="language-level-options">
                   {languageLevels.map((level) => (
                     <label key={level} className="language-level-chip">
@@ -947,6 +1172,78 @@ export default function App() {
                   ))}
                 </div>
               </fieldset>
+
+              <div className="country-picker">
+                <label htmlFor="target-countries" className="country-picker-label">
+                  {t('Pays cibles (selection multiple)', 'الدول المستهدفة (اختيار متعدد)')}
+                </label>
+                <div className="country-combobox" ref={countryPickerRef}>
+                  <div className={`country-combobox-input-wrap ${countryDropdownOpen ? 'country-combobox-input-wrap-open' : ''}`}>
+                    <Search className="icon-sm country-search-icon" />
+                    <Input
+                      id="target-countries"
+                      className="country-search-input"
+                      placeholder={t('Rechercher un pays (ex: Canada, Allemagne, Maroc...)', 'ابحث عن دولة (مثال: كندا، ألمانيا، المغرب...)')}
+                      value={countrySearch}
+                      onFocus={() => setCountryDropdownOpen(true)}
+                      onChange={(event) => {
+                        setCountrySearch(event.target.value)
+                        setCountryDropdownOpen(true)
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Escape') {
+                          setCountryDropdownOpen(false)
+                        }
+                      }}
+                      aria-label={t('Rechercher dans la liste des pays', 'البحث داخل قائمة الدول')}
+                    />
+                  </div>
+
+                  {countryDropdownOpen && (
+                    <div className="country-dropdown" role="listbox" aria-label={t('Liste des pays', 'قائمة الدول')}>
+                      {filteredCountryOptions.map((country) => {
+                        const selected = selectedCountries.includes(country.code)
+
+                        return (
+                          <button
+                            key={country.code}
+                            type="button"
+                            className={`country-dropdown-item ${selected ? 'country-dropdown-item-selected' : ''}`}
+                            onClick={() => handleCountryToggle(country.code)}
+                            aria-selected={selected}
+                          >
+                            <span>{country.label}</span>
+                            {selected && <CheckCircle2 className="icon-xs success" />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {selectedCountryLabels.length > 0 && (
+                  <div className="country-chip-list" aria-label={t('Pays selectionnes', 'الدول المختارة')}>
+                    {selectedCountries.map((countryCode) => (
+                      <button
+                        key={countryCode}
+                        type="button"
+                        className="country-chip"
+                        onClick={() => handleCountryChipRemove(countryCode)}
+                        aria-label={t(`Retirer ${countryLabelByCode[countryCode] || countryCode}`, `إزالة ${countryLabelByCode[countryCode] || countryCode}`)}
+                      >
+                        {countryLabelByCode[countryCode] || countryCode}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {filteredCountryOptions.length === 0 && (
+                  <p className="country-picker-empty">{t('Aucun pays trouvé pour cette recherche.', 'لم يتم العثور على دولة بهذه الكلمات.')}</p>
+                )}
+                <p className="country-picker-help">
+                  {t(`Cliquez pour selectionner jusqu'a 20 pays. Selectionnes: ${selectedCountries.length}`, `انقر لاختيار حتى 20 دولة. المختارة: ${selectedCountries.length}`)}
+                </p>
+              </div>
 
               <p className="cta-choice-label">{t('Choisissez votre mode de candidature', 'اختر طريقة التقديم')}</p>
               {leadSubmissionError && <p className="lead-feedback lead-feedback-error">{leadSubmissionError}</p>}

@@ -1,4 +1,14 @@
-# Career Service Web App
+# International Career Service Web App
+
+A comprehensive career support platform helping candidates find opportunities in **Canada, Germany, and Europe**. We provide job search assistance, document translation, professional guidance, and direct connections to employers.
+
+## Service Overview
+
+- **Geographic Focus**: Canada, Germany, European Union countries
+- **Career Domains**: 11+ sectors including IT, Healthcare, Construction, Logistics, and more
+- **Support Languages**: French, Arabic, English
+- **Services**: Job search, document preparation & translation, employer connections, career guidance
+
 
 Frontend: React + Vite
 Backend API: Node.js + Express

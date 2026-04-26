@@ -58,6 +58,14 @@
         align-items: center;
       }
 
+      .row-top-gap {
+        margin-top: 0.8rem;
+      }
+
+      .lead-count {
+        margin-bottom: 0.6rem;
+      }
+
       .filters {
         margin-top: 0.8rem;
       }
@@ -253,7 +261,7 @@
       <section class="card">
         <h1>Dashboard Admin</h1>
         <p>Consultez les leads, les stats de clics/postulations et exportez les donnees en CSV.</p>
-        <div class="row" style="margin-top: 0.8rem">
+        <div class="row row-top-gap">
           <input id="adminToken" class="input" type="password" placeholder="Token admin" />
           <button id="loadBtn" class="btn btn-primary">Charger les donnees</button>
           <button id="exportBtn" class="btn">Exporter CSV</button>
@@ -262,14 +270,15 @@
         <div class="row filters">
           <input id="searchInput" class="input" type="text" placeholder="Recherche nom/email/source" />
           <input id="domainInput" class="input input-sm" type="text" placeholder="Filtrer domaine" />
-          <select id="statusInput" class="input input-sm">
+          <input id="countryInput" class="input input-sm" type="text" placeholder="Filtrer pays" />
+          <select id="statusInput" class="input input-sm" title="Filtrer par statut">
             <option value="">Tous statuts</option>
             <option value="pending">En attente</option>
             <option value="validated">Validé</option>
             <option value="cancelled">Annulé</option>
           </select>
-          <input id="startDateInput" class="input input-sm" type="date" />
-          <input id="endDateInput" class="input input-sm" type="date" />
+          <input id="startDateInput" class="input input-sm" type="date" title="Date de début" aria-label="Date de début" />
+          <input id="endDateInput" class="input input-sm" type="date" title="Date de fin" aria-label="Date de fin" />
           <button id="applyFiltersBtn" class="btn">Appliquer filtres</button>
           <button id="resetFiltersBtn" class="btn">Reinitialiser</button>
         </div>
@@ -288,7 +297,7 @@
 
       <section class="card">
         <h2>Leads enregistres</h2>
-        <p id="leadCount" style="margin-bottom: 0.6rem"></p>
+        <p id="leadCount" class="lead-count"></p>
         <div class="table-wrap">
           <table>
             <thead>
@@ -298,6 +307,7 @@
                 <th>Nom</th>
                 <th>Email</th>
                 <th>Domaine</th>
+                <th>Pays cibles</th>
                 <th>Niveau</th>
                 <th>Statut</th>
                 <th>Canal</th>
@@ -327,6 +337,7 @@
       const clearBtn = document.getElementById('clearBtn')
       const searchInput = document.getElementById('searchInput')
       const domainInput = document.getElementById('domainInput')
+      const countryInput = document.getElementById('countryInput')
       const statusInput = document.getElementById('statusInput')
       const startDateInput = document.getElementById('startDateInput')
       const endDateInput = document.getElementById('endDateInput')
@@ -418,6 +429,7 @@
 
         const search = searchInput.value.trim()
         const domain = domainInput.value.trim()
+        const country = countryInput.value.trim()
         const status = statusInput.value.trim()
         const startDate = startDateInput.value
         const endDate = endDateInput.value
@@ -428,6 +440,10 @@
 
         if (domain) {
           params.set('domain', domain)
+        }
+
+        if (country) {
+          params.set('country', country)
         }
 
         if (status) {
@@ -482,6 +498,7 @@
                 <td>${escapeHtml(lead.fullName)}</td>
                 <td>${escapeHtml(lead.email)}</td>
                 <td>${escapeHtml(lead.domain)}</td>
+                <td>${escapeHtml(Array.isArray(lead.targetCountries) ? lead.targetCountries.join(', ') : '')}</td>
                 <td>${escapeHtml(lead.languageLevel)}</td>
                 <td><span class="status-chip status-${escapeHtml(normalizeStatus(lead.status))}">${escapeHtml(formatStatusLabel(normalizeStatus(lead.status)))}</span></td>
                 <td>${escapeHtml(lead.source || '')}</td>
@@ -642,6 +659,7 @@
       resetFiltersBtn.addEventListener('click', async () => {
         searchInput.value = ''
         domainInput.value = ''
+        countryInput.value = ''
         statusInput.value = ''
         startDateInput.value = ''
         endDateInput.value = ''

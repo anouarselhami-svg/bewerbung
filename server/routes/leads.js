@@ -20,6 +20,11 @@ const ensureLeadStatusSchema = async () => {
     ADD COLUMN IF NOT EXISTS status_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   `)
 
+  await pool.query(`
+    ALTER TABLE leads
+    ADD COLUMN IF NOT EXISTS target_countries TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]
+  `)
+
   leadStatusSchemaReady = true
 }
 
@@ -27,6 +32,7 @@ const LeadSchema = z.object({
   fullName: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(180),
   domain: z.string().trim().min(2).max(120),
+  targetCountries: z.array(z.string().trim().length(2).max(120)).min(1).max(20),
   languageLevel: z.enum(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']),
   source: z.string().trim().max(80).default('site-web'),
   recommendedAgent: z.string().trim().max(120).optional(),
@@ -44,6 +50,11 @@ router.post('/leads', async (req, res) => {
   }
 
   const lead = parsed.data
+  const normalizedTargetCountries = [...new Set(lead.targetCountries.map((country) => country.trim().toUpperCase()).filter(Boolean))]
+
+  if (normalizedTargetCountries.length === 0) {
+    return res.status(400).json({ error: 'Veuillez choisir au moins un pays cible' })
+  }
 
   if (lead.website && lead.website.trim().length > 0) {
     // Honeypot field: bots often fill hidden fields.
@@ -68,8 +79,8 @@ router.post('/leads', async (req, res) => {
     }
 
     const query = `
-      INSERT INTO leads (full_name, email, domain, language_level, source, recommended_agent, status, status_updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW())
+      INSERT INTO leads (full_name, email, domain, target_countries, language_level, source, recommended_agent, status, status_updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW())
       RETURNING id, created_at
     `
 
@@ -77,6 +88,7 @@ router.post('/leads', async (req, res) => {
       lead.fullName,
       lead.email,
       lead.domain,
+      normalizedTargetCountries,
       lead.languageLevel,
       lead.source,
       lead.recommendedAgent ?? null,

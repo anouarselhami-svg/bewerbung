@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS leads (
   full_name VARCHAR(120) NOT NULL,
   email VARCHAR(180) NOT NULL,
   domain VARCHAR(120) NOT NULL,
+  target_countries TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
   language_level VARCHAR(2) NOT NULL CHECK (language_level IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')),
   source VARCHAR(80) NOT NULL DEFAULT 'site-web',
   recommended_agent VARCHAR(120),
