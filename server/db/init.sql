@@ -61,5 +61,5 @@ CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events (
 INSERT INTO agents (full_name, phone, specialties)
 VALUES
   ('Contact 1', '212664879503', 'Pflege,Altenpflege,IT Support,Koch / Köchin,Gastronomie,Hotellerie,Mechaniker/in,Mechatroniker/in,Elektriker/in,Lagerlogistik,Verkäufer/in,KFZ-Technik'),
-  ('Contact 2', '+212 671-078310', 'Pflege,Altenpflege,IT Support,Koch / Köchin,Gastronomie,Hotellerie,Mechaniker/in,Mechatroniker/in,Elektriker/in,Lagerlogistik,Verkäufer/in,KFZ-Technik')
+  ('Contact 2', '212671078310', 'Pflege,Altenpflege,IT Support,Koch / Köchin,Gastronomie,Hotellerie,Mechaniker/in,Mechatroniker/in,Elektriker/in,Lagerlogistik,Verkäufer/in,KFZ-Technik')
 ON CONFLICT (phone) DO NOTHING;

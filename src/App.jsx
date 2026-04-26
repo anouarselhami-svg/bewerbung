@@ -32,7 +32,7 @@ import './App.css'
 
 const Animated = motion
 
-const WHATSAPP_RECIPIENTS = ['+212 671-078310', '212664879503']
+const WHATSAPP_RECIPIENTS = ['212671078310', '212664879503']
 const WHATSAPP_ROUTING_KEY = 'whatsapp-routing-index'
 
 const resolveApiBaseUrl = () => {
@@ -387,7 +387,7 @@ const supportEmail = 'baloua96@hotmail.fr'
 
 const teamMembers = [
   { name: 'Contact 1', phone: '212664879503', specialties: ['Pflege', 'Altenpflege', 'IT Support', 'Koch / Köchin', 'Gastronomie', 'Hotellerie'] },
-  { name: 'Contact 2', phone: '+212 671-078310', specialties: ['Pflege', 'Altenpflege', 'IT Support', 'Koch / Köchin', 'Gastronomie', 'Hotellerie'] },
+  { name: 'Contact 2', phone: '212671078310', specialties: ['Pflege', 'Altenpflege', 'IT Support', 'Koch / Köchin', 'Gastronomie', 'Hotellerie'] },
 ]
 
 const applicationRoutingKey = 'application-routing-index'
