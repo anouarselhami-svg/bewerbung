@@ -25,6 +25,11 @@ const ensureLeadStatusSchema = async () => {
     ADD COLUMN IF NOT EXISTS target_countries TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]
   `)
 
+  await pool.query(`
+    ALTER TABLE leads
+    ADD COLUMN IF NOT EXISTS language_diploma VARCHAR(50) NOT NULL DEFAULT 'none'
+  `)
+
   leadStatusSchemaReady = true
 }
 
@@ -34,6 +39,7 @@ const LeadSchema = z.object({
   domain: z.string().trim().min(2).max(120),
   targetCountries: z.array(z.string().trim().length(2).max(120)).min(1).max(20),
   languageLevel: z.enum(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']),
+  languageDiploma: z.enum(['none', 'delf', 'dalf', 'toefl', 'ielts', 'cambridge', 'goethe', 'osd', 'telc']).default('none'),
   source: z.string().trim().max(80).default('site-web'),
   recommendedAgent: z.string().trim().max(120).optional(),
   website: z.string().trim().max(255).optional(),
@@ -79,8 +85,8 @@ router.post('/leads', async (req, res) => {
     }
 
     const query = `
-      INSERT INTO leads (full_name, email, domain, target_countries, language_level, source, recommended_agent, status, status_updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW())
+      INSERT INTO leads (full_name, email, domain, target_countries, language_level, language_diploma, source, recommended_agent, status, status_updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', NOW())
       RETURNING id, created_at
     `
 
@@ -90,6 +96,7 @@ router.post('/leads', async (req, res) => {
       lead.domain,
       normalizedTargetCountries,
       lead.languageLevel,
+      lead.languageDiploma,
       lead.source,
       lead.recommendedAgent ?? null,
     ]

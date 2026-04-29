@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS leads (
   domain VARCHAR(120) NOT NULL,
   target_countries TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
   language_level VARCHAR(2) NOT NULL CHECK (language_level IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')),
+  language_diploma VARCHAR(50) NOT NULL DEFAULT 'none' CHECK (language_diploma IN ('none', 'delf', 'dalf', 'toefl', 'ielts', 'cambridge', 'goethe', 'osd', 'telc')),
   source VARCHAR(80) NOT NULL DEFAULT 'site-web',
   recommended_agent VARCHAR(120),
   status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'validated', 'cancelled')),

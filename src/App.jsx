@@ -267,14 +267,6 @@ const openRotatingWhatsAppLink = (text) => {
   window.open(link, '_blank', 'noopener,noreferrer')
 }
 
-const createWhatsAppLink = (branchTitle, language = 'fr') => {
-  const text =
-    language === 'ar'
-      ? `مرحبا، أريد مزيدا من المعلومات حول تخصص ${branchTitle} في العالم.`
-      : `Bonjour, je veux plus d'informations sur le domaine ${branchTitle} au Canada, en Allemagne ou en Europe.`
-  return buildWhatsAppLink(getNextWhatsAppRecipient(), text)
-}
-
 const services = [
   { icon: Search, title: "Recherche d'offres d'emploi internationales", description: 'Nous trouvons des offres adaptees a votre profil au Canada, en Allemagne et en Europe.' },
   { icon: Mail, title: 'Envoi des offres pertinentes', description: 'Nous vous envoyons une selection claire d’offres et de contacts utiles.' },
@@ -440,6 +432,17 @@ const AR_TEXT_MAP = {
 const servicesPlaceholderImage = BRAND_LOGO_PATH
 const siteQrImage = '/qr-service-for-deutschland.png'
 const languageLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+const languageDiplomas = [
+  { value: 'none', label: 'Aucun diplôme', labelAr: 'لا يوجد شهادة' },
+  { value: 'delf', label: 'DELF (Français)', labelAr: 'DELF (فرنسي)' },
+  { value: 'dalf', label: 'DALF (Français)', labelAr: 'DALF (فرنسي)' },
+  { value: 'toefl', label: 'TOEFL (Anglais)', labelAr: 'TOEFL (إنجليزي)' },
+  { value: 'ielts', label: 'IELTS (Anglais)', labelAr: 'IELTS (إنجليزي)' },
+  { value: 'cambridge', label: 'Cambridge (Anglais)', labelAr: 'Cambridge (إنجليزي)' },
+  { value: 'goethe', label: 'Goethe-Institut (Allemand)', labelAr: 'معهد Goethe (ألماني)' },
+  { value: 'osd', label: 'ÖSD (Allemand)', labelAr: 'ÖSD (ألماني)' },
+  { value: 'telc', label: 'TELC (Allemand)', labelAr: 'TELC (ألماني)' },
+]
 const supportEmail = 'baloua96@hotmail.fr'
 
 const teamMembers = [
@@ -515,11 +518,14 @@ export default function App() {
   const [countrySearch, setCountrySearch] = useState('')
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false)
   const [selectedLevel, setSelectedLevel] = useState('B1')
+  const [selectedDiploma, setSelectedDiploma] = useState('')
+  const [diplomaDropdownOpen, setDiplomaDropdownOpen] = useState(false)
   const [leadSubmissionError, setLeadSubmissionError] = useState('')
   const [leadSubmissionSuccess, setLeadSubmissionSuccess] = useState('')
   const [leadSubmitting, setLeadSubmitting] = useState(false)
   const [brandLogoFailed, setBrandLogoFailed] = useState(false)
   const countryPickerRef = useRef(null)
+  const diplomaPickerRef = useRef(null)
 
   const isArabic = activeLanguage === 'ar'
   const t = (fr, ar) => (isArabic ? ar : fr)
@@ -568,18 +574,16 @@ export default function App() {
     [countryLabelByCode, selectedCountries],
   )
 
-  const handleCountryToggle = (countryCode) => {
+  const handleCountrySelect = (countryCode) => {
     setSelectedCountries((previous) => {
-      if (previous.includes(countryCode)) {
-        return previous.filter((code) => code !== countryCode)
+      if (previous[0] === countryCode) {
+        return []
       }
 
-      if (previous.length >= 20) {
-        return previous
-      }
-
-      return [...previous, countryCode]
+      return [countryCode]
     })
+    setCountryDropdownOpen(false)
+    setCountrySearch('')
   }
 
   const handleCountryChipRemove = (countryCode) => {
@@ -600,6 +604,21 @@ export default function App() {
     document.addEventListener('mousedown', handleOutsideClick)
     return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [countryDropdownOpen])
+
+  useEffect(() => {
+    if (!diplomaDropdownOpen) {
+      return
+    }
+
+    const handleOutsideClick = (event) => {
+      if (diplomaPickerRef.current && !diplomaPickerRef.current.contains(event.target)) {
+        setDiplomaDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [diplomaDropdownOpen])
 
   const localizeBranchDetail = (detail) => {
     if (!isArabic) {
@@ -672,6 +691,11 @@ export default function App() {
       return false
     }
 
+    if (!selectedDiploma || selectedDiploma === 'none') {
+      setLeadSubmissionError(t('Veuillez choisir un type de diplôme de langue.', 'يرجى اختيار نوع شهادة اللغة.'))
+      return false
+    }
+
     await trackAnalyticsEvent('lead_submit_attempt', source, {
       domain: selectedDomain,
       targetCountriesCount: selectedCountries.length,
@@ -692,6 +716,7 @@ export default function App() {
           domain: selectedDomain,
           targetCountries: selectedCountries,
           languageLevel: selectedLevel,
+          languageDiploma: selectedDiploma,
           source,
           recommendedAgent: activeMember.name,
           website: candidateWebsite,
@@ -845,7 +870,11 @@ export default function App() {
           <Animated.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }} className="hero-copy">
             <div className="eyebrow"><Sparkles className="icon-xs" /> {t('Accompagnement complet pour travailler ou se former au Canada, en Allemagne et en Europe', 'مرافقة كاملة للعمل أو التكوين في كندا وألمانيا وأوروبا')}</div>
 
-            <h1>{t('Construisez votre chemin vers un ', 'ابنِ طريقك نحو ')}<span>{t('emploi', 'وظيفة')}</span>{t(' ou une ', ' أو ')}<span className="blue">formation</span>{t(' au Canada, en Allemagne ou en Europe.', ' في كندا أو ألمانيا أو أوروبا.')}</h1>
+            <h1>
+              {t('Construisez votre chemin', 'ابنِ طريقك')}
+              <br />
+              <span className="hero-line-accent">{t('au Canada, en Europe ou en Asie.', 'في كندا وأوروبا وآسيا.')}</span>
+            </h1>
 
             <p className="hero-text">{t('Nous identifions les bonnes offres, adaptons votre dossier et vous accompagnons jusqu’au contact avec les recruteurs.', 'نحدد الفرص المناسبة، نجهز ملفك بطريقة احترافية، ونرافقك حتى التواصل مع جهات التوظيف.')}</p>
 
@@ -931,28 +960,23 @@ export default function App() {
 
         <div className="branch-grid">
           {branches.map((branch, index) => {
-            const Icon = branch.icon
             return (
-              <Animated.a
+              <Animated.div
                 key={branch.title}
-                href={createWhatsAppLink(branch.title, activeLanguage)}
-                target="_blank"
-                rel="noreferrer"
                 initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.04 }}
-                className="branch-link"
-                onClick={(event) => {
-                  event.preventDefault()
-                  openRotatingWhatsAppLink(branchQuestionMessage(branch.title))
-                }}
               >
-                <Card className="glass-card branch-card">
-                  <CardContent className="card-content">
-                    <div className="branch-icon-wrap"><Icon className="icon-md success-text" /></div>
-                    <h3>{branch.title}</h3>
-                    <p>{tr(branch.subtitle)}</p>
+                <details className="branch-card glass-card">
+                  <summary className="branch-summary">
+                    <span className="branch-summary-title">{branch.title}</span>
+                    <span className="branch-summary-chevron" aria-hidden="true">
+                      <ArrowRight className="icon-xs" />
+                    </span>
+                  </summary>
+                  <CardContent className="card-content branch-card-content">
+                    <p className="branch-summary-text">{tr(branch.subtitle)}</p>
                     <ul className="branch-details">
                       {branch.details.map((detail) => (
                         <li key={detail} className="branch-detail-item">
@@ -961,10 +985,17 @@ export default function App() {
                         </li>
                       ))}
                     </ul>
-                    <div className="pill-link">{t('Poser une question sur WhatsApp', 'اطرح سؤالك على واتساب')} <ArrowRight className="icon-xs" /></div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="branch-cta"
+                      onClick={() => openRotatingWhatsAppLink(branchQuestionMessage(branch.title))}
+                    >
+                      {t('Poser une question sur WhatsApp', 'اطرح سؤالك على واتساب')} <ArrowRight className="icon-xs ml-2" />
+                    </Button>
                   </CardContent>
-                </Card>
-              </Animated.a>
+                </details>
+              </Animated.div>
             )
           })}
         </div>
@@ -1173,9 +1204,59 @@ export default function App() {
                 </div>
               </fieldset>
 
+              <div className="diploma-picker" ref={diplomaPickerRef}>
+                <label className="country-picker-label" htmlFor="language-diploma-trigger">
+                  {t('Type de diplôme de langue (obligatoire)', 'نوع شهادة اللغة (إجباري)')}
+                </label>
+                <button
+                  id="language-diploma-trigger"
+                  type="button"
+                  className={`ui-input diploma-trigger ${diplomaDropdownOpen ? 'diploma-trigger-open' : ''}`}
+                  onClick={() => setDiplomaDropdownOpen((open) => !open)}
+                  aria-haspopup="listbox"
+                  aria-expanded={diplomaDropdownOpen}
+                  aria-label={t('Choisir un type de diplôme de langue', 'اختر نوع شهادة اللغة')}
+                >
+                  <span className="diploma-trigger-value">
+                    {isArabic
+                      ? languageDiplomas.find((diploma) => diploma.value === selectedDiploma)?.labelAr ?? t('Aucun diplôme', 'لا يوجد شهادة')
+                      : languageDiplomas.find((diploma) => diploma.value === selectedDiploma)?.label ?? t('Aucun diplôme', 'لا يوجد شهادة')}
+                  </span>
+                  <span className="diploma-trigger-arrow" aria-hidden="true">▾</span>
+                </button>
+
+                {diplomaDropdownOpen && (
+                  <div className="country-dropdown diploma-dropdown" role="listbox" aria-label={t('Types de diplômes de langue', 'أنواع شهادات اللغة')}>
+                    {languageDiplomas.map((diploma) => {
+                      const selected = selectedDiploma === diploma.value
+                      const isDisabledNone = diploma.value === 'none'
+
+                      return (
+                        <button
+                          key={diploma.value}
+                          type="button"
+                          className={`country-dropdown-item diploma-option ${selected ? 'country-dropdown-item-selected' : ''} ${isDisabledNone ? 'diploma-option-disabled' : ''}`}
+                          onClick={() => {
+                            if (!isDisabledNone) {
+                              setSelectedDiploma(diploma.value)
+                              setDiplomaDropdownOpen(false)
+                            }
+                          }}
+                          aria-selected={selected}
+                          disabled={isDisabledNone}
+                        >
+                          <span>{isArabic ? diploma.labelAr : diploma.label}</span>
+                          {selected && <CheckCircle2 className="icon-xs success" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
               <div className="country-picker">
                 <label htmlFor="target-countries" className="country-picker-label">
-                  {t('Pays cibles (selection multiple)', 'الدول المستهدفة (اختيار متعدد)')}
+                  {t('Pays cible (choix unique)', 'الدولة المستهدفة (اختيار واحد)')}
                 </label>
                 <div className="country-combobox" ref={countryPickerRef}>
                   <div className={`country-combobox-input-wrap ${countryDropdownOpen ? 'country-combobox-input-wrap-open' : ''}`}>
@@ -1209,7 +1290,7 @@ export default function App() {
                             key={country.code}
                             type="button"
                             className={`country-dropdown-item ${selected ? 'country-dropdown-item-selected' : ''}`}
-                            onClick={() => handleCountryToggle(country.code)}
+                            onClick={() => handleCountrySelect(country.code)}
                             aria-selected={selected}
                           >
                             <span>{country.label}</span>
@@ -1222,7 +1303,7 @@ export default function App() {
                 </div>
 
                 {selectedCountryLabels.length > 0 && (
-                  <div className="country-chip-list" aria-label={t('Pays selectionnes', 'الدول المختارة')}>
+                  <div className="country-chip-list" aria-label={t('Pays selectionne', 'الدولة المختارة')}>
                     {selectedCountries.map((countryCode) => (
                       <button
                         key={countryCode}
@@ -1241,7 +1322,10 @@ export default function App() {
                   <p className="country-picker-empty">{t('Aucun pays trouvé pour cette recherche.', 'لم يتم العثور على دولة بهذه الكلمات.')}</p>
                 )}
                 <p className="country-picker-help">
-                  {t(`Cliquez pour selectionner jusqu'a 20 pays. Selectionnes: ${selectedCountries.length}`, `انقر لاختيار حتى 20 دولة. المختارة: ${selectedCountries.length}`)}
+                  {t(
+                    `Choix unique: 1 pays maximum. Selectionne: ${selectedCountries.length}`,
+                    `اختيار واحد فقط: دولة واحدة كحد أقصى. المختارة: ${selectedCountries.length}`,
+                  )}
                 </p>
               </div>
 
