@@ -218,6 +218,12 @@ video {
   font-style: italic;
 }
 
+.section-intro h2,
+.split-copy h2,
+.cta-content h2 {
+  color: var(--brand-sky);
+}
+
 .hero-copy h1 {
   max-width: 12ch;
   font-size: clamp(2.45rem, 5vw, 4.35rem);

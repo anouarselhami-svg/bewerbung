@@ -918,7 +918,7 @@ export default function App() {
       <section className="content-section video-section" id="video">
         <div className="section-intro narrow">
           <p className="section-kicker">{t('Aperçu des services', 'نظرة على الخدمات')}</p>
-          <h2>{t('Image de présentation des services', 'صورة تقديمية للخدمات')}</h2>
+          <h2>{t('Notre logo', 'شعارنا')}</h2>
           <p>{t('La vidéo est temporairement désactivée. Voici le visuel des services.', 'الفيديو متوقف مؤقتا. إليك الصورة التوضيحية للخدمات.')}</p>
         </div>
 
@@ -1101,20 +1101,6 @@ export default function App() {
             <Card className="glass-card side-card"><CardContent className="card-content"><h3>{t('Pourquoi les clients choisissent ce service', 'لماذا يختار العملاء هذه الخدمة')}</h3><div className="check-list large">{highlights.map((item) => (<div key={item} className="check-row"><CheckCircle2 className="icon-sm success" /><p>{tr(item)}</p></div>))}</div></CardContent></Card>
             <Card className="glass-card side-card alt-card"><CardContent className="card-content"><h3>{t('Idéal pour', 'مناسب لـ')}</h3><div className="tag-grid">{['Étudiants', 'Jeunes diplômés', 'Débutants dans les candidatures internationales', 'Candidats en formation professionnelle', 'Personnes qui veulent partir travailler au Canada, en Allemagne ou en Europe', 'Personnes ayant besoin d’aide pour leurs documents'].map((group) => (<div key={group} className="tag-item">{tr(group)}</div>))}</div></CardContent></Card>
           </div>
-        </div>
-      </section>
-
-      <section className="content-section faq-section">
-        <div className="section-intro narrow">
-          <p className="section-kicker">{t('FAQ', 'الأسئلة الشائعة')}</p>
-          <h2>{t('Questions fréquentes', 'الأسئلة الشائعة')}</h2>
-          <p>{t('Réponses courtes et directes.', 'أجوبة قصيرة ومباشرة.')}</p>
-        </div>
-
-        <div className="faq-list">
-          {faq.map((item) => (
-            <details key={item.q} className="faq-item"><summary><span>{tr(item.q)}</span><span className="faq-arrow">⌄</span></summary><p>{tr(item.a)}</p></details>
-          ))}
         </div>
       </section>
 
@@ -1393,16 +1379,75 @@ export default function App() {
             </CardContent>
           </Card>
         </div>
-
-        <footer className="site-footer">
-          <p>{t('Informations legales:', 'معلومات قانونية:')}</p>
-          <div className="site-footer-links">
-            <a className="site-footer-link" href="/legal.html">
-              {t('Mentions legales et confidentialite', 'الإشعارات القانونية والخصوصية')}
-            </a>
-          </div>
-        </footer>
       </section>
+
+      <section className="content-section footer-contact-section" id="contacts-footer">
+        <div className="section-intro narrow">
+          <p className="section-kicker">{t('Contacts', 'جهات الاتصال')}</p>
+          <h2>{t('Contacts directs + QR Code du site', 'اتصال مباشر + رمز QR للموقع')}</h2>
+          <p>{t('Scannez le QR code pour ouvrir le site, ou contactez directement notre equipe.', 'امسح رمز QR لفتح الموقع، أو تواصل مباشرة مع فريقنا.')}</p>
+        </div>
+
+        <div className="footer-contact-grid">
+          <Card className="glass-card contact-list-card">
+            <CardContent className="card-content contact-list-content">
+              {teamMembers.map((member) => (
+                <div key={member.phone} className="contact-person-card">
+                  <h3>{t(member.name, member.name.replace('Contact', 'جهة اتصال'))}</h3>
+                  <p>WhatsApp: {formatWhatsAppNumber(member.phone)}</p>
+                  <a
+                    className="ui-button button-outline button-md"
+                    href={buildWhatsAppLink(member.phone, generalInfoMessage)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Phone className="icon-xs" /> {t('Ouvrir WhatsApp', 'فتح واتساب')}
+                  </a>
+                </div>
+              ))}
+
+              <div className="contact-person-card">
+                <h3>{t('Email Support', 'دعم البريد الإلكتروني')}</h3>
+                <p>{supportEmail}</p>
+                <a className="ui-button button-outline button-md" href={`mailto:${supportEmail}`}>
+                  <Mail className="icon-xs" /> {t('Envoyer un email', 'إرسال بريد إلكتروني')}
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card qr-card">
+            <CardContent className="card-content qr-content">
+              <h3>{t('QR Code du site', 'رمز QR للموقع')}</h3>
+              <p>{t('Scannez ce code avec votre telephone pour ouvrir la page.', 'امسح هذا الرمز بهاتفك لفتح الصفحة.')}</p>
+              <img className="qr-image" src={siteQrImage} alt={t('QR code vers service-deutschland.vercel.app', 'رمز QR نحو service-deutschland.vercel.app')} loading="lazy" />
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <section className="content-section faq-section">
+        <div className="section-intro narrow">
+          <p className="section-kicker">{t('FAQ', 'الأسئلة الشائعة')}</p>
+          <h2>{t('Questions fréquentes', 'الأسئلة الشائعة')}</h2>
+          <p>{t('Réponses courtes et directes.', 'أجوبة قصيرة ومباشرة.')}</p>
+        </div>
+
+        <div className="faq-list">
+          {faq.map((item) => (
+            <details key={item.q} className="faq-item"><summary><span>{tr(item.q)}</span><span className="faq-arrow">⌄</span></summary><p>{tr(item.a)}</p></details>
+          ))}
+        </div>
+      </section>
+
+      <footer className="site-footer">
+        <p>{t('Informations legales:', 'معلومات قانونية:')}</p>
+        <div className="site-footer-links">
+          <a className="site-footer-link" href="/legal.html">
+            {t('Mentions legales et confidentialite', 'الإشعارات القانونية والخصوصية')}
+          </a>
+        </div>
+      </footer>
 
       <a
         className="mobile-whatsapp-fab"
